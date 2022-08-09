@@ -5,16 +5,15 @@ import * as yamlFrontMatter from "yaml-front-matter"
 import * as readDirRecurse from "recursive-readdir"
 
 export class IndexMetadata {
-  public tagIndex: ITagIndex[] = []
   private readonly projectRootDir: string | undefined
+
   constructor(projectRootDir: string | undefined) {
     this.projectRootDir = projectRootDir
   }
 
-  public async init(): Promise<any> {
+  public async init(): Promise<IMetadataIndex | string | undefined> {
     const files = await this.getDirFiles()
     let parsed: IMetadatum[] = []
-
     if (files !== undefined) {
       if (!this.dirHasMd(files)) {
         return vscode.window.showErrorMessage(
@@ -25,19 +24,20 @@ export class IndexMetadata {
           let metadata = await this.parseFileFrontmatter(file)
           parsed.push(...metadata)
         }
-        console.log(this.createIndex(parsed))
+        console.log(this.createMetadataIndex(parsed))
+        //return this.createMetadataIndex(parsed)
       }
     }
   }
 
-  private createIndex(metadata: IMetadatum[]): ITagIndex {
-    let index: ITagIndex = {}
-    metadata.map((ele: any) => {
+  private createMetadataIndex(metadata: IMetadatum[]): IMetadataIndex {
+    let index: IMetadataIndex = {}
+    metadata.map((ele: IMetadatum) => {
       !Object.keys(index).includes(ele.tag)
         ? (index[ele.tag] = [ele.file])
         : index[ele.tag].push(ele.file)
     })
-    return index as ITagIndex
+    return index
   }
 
   private dirHasMd(dirContents: string[]): boolean {
@@ -60,14 +60,16 @@ export class IndexMetadata {
     }
   }
 
-  private async parseFileFrontmatter(markdownFile: string) {
+  private async parseFileFrontmatter(
+    markdownFile: string
+  ): Promise<IMetadatum[]> {
     const fileContents = await fs.promises.readFile(markdownFile, "utf-8")
     const tagsForFile = yamlFrontMatter.loadFront(fileContents).tags
     return tagsForFile.map((tag: string) => ({ tag: tag, file: markdownFile }))
   }
 }
 
-interface ITagIndex {
+interface IMetadataIndex {
   [key: string]: string[]
 }
 

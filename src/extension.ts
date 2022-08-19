@@ -1,17 +1,22 @@
-import { IndexMetadata } from "./classes/IndexMetadata"
 import * as vscode from "vscode"
-import { Tags } from "./views/tags/Tags"
+import { IndexMetadata } from "./IndexMetadata/IndexMetadata"
+import { MetadataListing } from "./IndexMetadata/views/MetadataListing"
 
-export function activate(context: vscode.ExtensionContext) {
-  console.log("Your extension is activated")
-  vscode.window.showInformationMessage("Application started")
-  vscode.window.createTreeView("tags", {
-    treeDataProvider: new Tags(),
-  })
+export async function activate(context: vscode.ExtensionContext) {
+  const rootPath =
+    vscode.workspace.workspaceFolders &&
+    vscode.workspace.workspaceFolders.length > 0
+      ? vscode.workspace.workspaceFolders[0].uri.fsPath
+      : undefined
 
-  // Temporary logging
-  let wipTagView = new Tags()
-  console.log(wipTagView.metadataTemp())
+  const tags = new IndexMetadata(rootPath)
+  const indexedTags = await tags.main()
+
+  if (indexedTags !== undefined && typeof indexedTags !== "string") {
+    vscode.window.createTreeView("tags", {
+      treeDataProvider: new MetadataListing(indexedTags),
+    })
+  }
 }
 
 // this method is called when your extension is deactivated

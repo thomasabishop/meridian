@@ -3,6 +3,7 @@ import { IndexMetadata } from "./IndexMetadata/IndexMetadata"
 import { MetadataListingProvider } from "./IndexMetadata/views/MetadataListingProvider"
 
 export async function activate(context: vscode.ExtensionContext) {
+  // console.log(vscode.workspace.getConfiguration().get("meridian.ignoreDirs"))
   const rootPath =
     vscode.workspace.workspaceFolders &&
     vscode.workspace.workspaceFolders.length > 0

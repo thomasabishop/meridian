@@ -6,10 +6,11 @@ import * as readDirRecurse from "recursive-readdir"
 
 export class IndexMetadata {
   private readonly projectRootDir: string | undefined
-  private readonly dirsToIgnore = ["img", ".git"]
+  private dirsToIgnore = [".git"]
 
   constructor(projectRootDir: string | undefined) {
     this.projectRootDir = projectRootDir
+    this.setDirsToIgnore()
   }
 
   public async main(): Promise<IMetadataIndex[] | string | undefined> {
@@ -63,6 +64,17 @@ export class IndexMetadata {
       if (err instanceof Error) {
         console.error(err.message)
       }
+    }
+  }
+
+  private setDirsToIgnore(): void {
+    let ignoreDirs = vscode.workspace
+      .getConfiguration()
+      .get("meridian.ignoreDirs") as string[]
+    if (ignoreDirs?.length) {
+      this.dirsToIgnore.push(...ignoreDirs)
+    } else {
+      return
     }
   }
 

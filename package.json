@@ -10,7 +10,8 @@
     "Other"
   ],
   "activationEvents": [
-    "onView:tags"
+    "onView:tags",
+    "onView:tagsRefactor"
   ],
   "main": "./dist/extension.js",
   "contributes": {

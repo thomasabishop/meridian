@@ -1,6 +1,6 @@
 import * as vscode from "vscode"
 import { IndexMetadata } from "./IndexMetadata/IndexMetadata"
-import { MetadataListing } from "./IndexMetadata/views/MetadataListing"
+import { MetadataListingProvider } from "./IndexMetadata/views/MetadataListingProvider"
 
 export async function activate(context: vscode.ExtensionContext) {
   const rootPath =
@@ -9,14 +9,14 @@ export async function activate(context: vscode.ExtensionContext) {
       ? vscode.workspace.workspaceFolders[0].uri.fsPath
       : undefined
 
-  const tags = new IndexMetadata(rootPath)
-  const indexedTags = await tags.main()
+  const metadataListingProvider = new MetadataListingProvider(
+    rootPath as string
+  )
 
-  if (indexedTags !== undefined && typeof indexedTags !== "string") {
-    vscode.window.createTreeView("tags", {
-      treeDataProvider: new MetadataListing(indexedTags),
-    })
-  }
+  vscode.window.registerTreeDataProvider("tags", metadataListingProvider)
+  vscode.commands.registerCommand("tags.reindex", () =>
+    metadataListingProvider.refreshIndex()
+  )
 }
 
 // this method is called when your extension is deactivated

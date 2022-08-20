@@ -1,24 +1,50 @@
+import { IndexMetadata } from "../IndexMetadata"
 import * as vscode from "vscode"
 import * as _ from "lodash"
 import { IMetadataIndex } from "../IndexMetadata"
-export class MetadataListing implements vscode.TreeDataProvider<TreeItem> {
-  private readonly metadataIndex: TreeItem[]
 
-  constructor(metadataIndex: IMetadataIndex[]) {
-    this.metadataIndex = this.transformMetadataToTreeItem(metadataIndex)
+export class MetadataListingProvider
+  implements vscode.TreeDataProvider<TreeItem>
+{
+  private metadataIndex: Promise<TreeItem[] | undefined>
+  private readonly projectRoot
+  private _onDidChangeTreeData: vscode.EventEmitter<undefined | null | void> =
+    new vscode.EventEmitter<undefined | null | void>()
+  readonly onDidChangeTreeData: vscode.Event<undefined | null | void> =
+    this._onDidChangeTreeData.event
+
+  constructor(projectRoot: string) {
+    this.projectRoot = projectRoot
+    this.metadataIndex = this.generateMetadataIndex()
   }
 
-  getTreeItem(element: TreeItem): vscode.TreeItem | Thenable<vscode.TreeItem> {
+  public getTreeItem(
+    element: TreeItem
+  ): vscode.TreeItem | Thenable<vscode.TreeItem> {
     return element
   }
 
-  getChildren(
+  public getChildren(
     element?: TreeItem | undefined
   ): vscode.ProviderResult<TreeItem[]> {
     if (element === undefined) {
       return this.metadataIndex
     }
     return element.children
+  }
+
+  // Repopulate index for metadata type
+  public refreshIndex(): void {
+    this.metadataIndex = this.generateMetadataIndex()
+    this._onDidChangeTreeData.fire()
+  }
+
+  private async generateMetadataIndex() {
+    const indexer = new IndexMetadata(this.projectRoot)
+    const data = await indexer.main()
+    if (data !== undefined && typeof data !== "string") {
+      return this.transformMetadataToTreeItem(data)
+    }
   }
 
   private transformMetadataToTreeItem(
@@ -40,19 +66,20 @@ export class MetadataListing implements vscode.TreeDataProvider<TreeItem> {
       (datum: IMetadataIndex) =>
         new TreeItem(datum.token, [...populateTreeItemChildren(datum.files)])
     )
-
     // Sort alphabetically
     transformed = _.orderBy(transformed, ["label"], ["asc"])
     return [...transformed]
   }
 }
 
+// Create recursive TreeItem object which accepts label, child TreeItems and clickable link to listed resource
+
 class TreeItem extends vscode.TreeItem {
   children: TreeItem[] | undefined
   constructor(
     label: string,
     children?: TreeItem[],
-    public readonly command?: vscode.Command
+    public command?: vscode.Command
   ) {
     super(
       label,
@@ -63,5 +90,3 @@ class TreeItem extends vscode.TreeItem {
     this.children = children
   }
 }
-
-// https://stackoverflow.com/questions/67975879/vs-code-extension-treeitem-command-property-how-to-issue-vscode-open

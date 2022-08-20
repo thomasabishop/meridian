@@ -14,7 +14,6 @@
   ],
   "main": "./dist/extension.js",
   "contributes": {
-    "commands": [],
     "viewsContainers": {
       "activitybar": [
         {
@@ -29,6 +28,22 @@
         {
           "id": "tags",
           "name": "Tags"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "tags.reindex",
+        "title": "Re-index document metadata",
+        "icon": "$(refresh)"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "tags.reindex",
+          "when": "view == tags",
+          "group": "navigation"
         }
       ]
     }

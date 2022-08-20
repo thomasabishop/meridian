@@ -7,6 +7,8 @@ import * as readDirRecurse from "recursive-readdir"
 export class IndexMetadata {
   private readonly projectRootDir: string | undefined
   private readonly dirsToIgnore = ["img", ".git"]
+  public readonly metadata: IMetadataIndex[] = []
+
   constructor(projectRootDir: string | undefined) {
     this.projectRootDir = projectRootDir
   }
@@ -21,6 +23,8 @@ export class IndexMetadata {
       let metadata = await this.parseFileFrontmatter(file)
       metadata !== undefined && parsed.push(...metadata)
     }
+
+    console.log(this.createMetadataIndex(parsed))
     return this.createMetadataIndex(parsed)
   }
 
@@ -90,7 +94,7 @@ export class IndexMetadata {
     return path.parse(filePath).name.split("_").join(" ")
   }
 
-  private fileIsMd(file: string): boolean {
+  public fileIsMd(file: string): boolean {
     return path.extname(file) === ".md"
   }
 }

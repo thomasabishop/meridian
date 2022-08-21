@@ -1,102 +1,103 @@
 {
-  "name": "meridian",
-  "displayName": "meridian",
-  "description": "tbc",
-  "version": "0.0.1",
-  "engines": {
-    "vscode": "^1.69.0"
-  },
-  "categories": [
-    "Other"
-  ],
-  "activationEvents": [
-    "onView:tags",
-    "onView:categories"
-  ],
-  "main": "./dist/extension.js",
-  "contributes": {
-    "viewsContainers": {
-      "activitybar": [
-        {
-          "id": "meridian",
-          "title": "Meridian",
-          "icon": "media/logo.svg"
-        }
-      ]
-    },
-    "views": {
-      "meridian": [
-        {
-          "id": "categories",
-          "name": "Categories"
-        },
-        {
-          "id": "tags",
-          "name": "Tags"
-        }
-      ]
-    },
-    "commands": [
-      {
-        "command": "tags.reindex",
-        "title": "Re-index project tags",
-        "icon": "$(refresh)"
+   "name": "meridian",
+   "displayName": "meridian",
+   "description": "tbc",
+   "version": "0.0.1",
+   "engines": {
+      "vscode": "^1.69.0"
+   },
+   "categories": [
+      "Other"
+   ],
+   "activationEvents": [
+      "onView:tags",
+      "onView:categories",
+      "onFileSystem:scheme"
+   ],
+   "main": "./dist/extension.js",
+   "contributes": {
+      "viewsContainers": {
+         "activitybar": [
+            {
+               "id": "meridian",
+               "title": "Meridian",
+               "icon": "media/logo.svg"
+            }
+         ]
       },
-      {
-        "command": "cats.reindex",
-        "title": "Re-index project categories",
-        "icon": "$(refresh)"
+      "views": {
+         "meridian": [
+            {
+               "id": "categories",
+               "name": "Categories"
+            },
+            {
+               "id": "tags",
+               "name": "Tags"
+            }
+         ]
+      },
+      "commands": [
+         {
+            "command": "tags.reindex",
+            "title": "Re-index project tags",
+            "icon": "$(refresh)"
+         },
+         {
+            "command": "cats.reindex",
+            "title": "Re-index project categories",
+            "icon": "$(refresh)"
+         }
+      ],
+      "menus": {
+         "view/title": [
+            {
+               "command": "tags.reindex",
+               "when": "view == tags",
+               "group": "navigation"
+            },
+            {
+               "command": "cats.reindex",
+               "when": "view == categories",
+               "group": "navigation"
+            }
+         ]
       }
-    ],
-    "menus": {
-      "view/title": [
-        {
-          "command": "tags.reindex",
-          "when": "view == tags",
-          "group": "navigation"
-        },
-        {
-          "command": "cats.reindex",
-          "when": "view == categories",
-          "group": "navigation"
-        }
-      ]
-    }
-  },
-  "scripts": {
-    "vscode:prepublish": "npm run package",
-    "compile": "webpack",
-    "watch": "webpack --watch",
-    "package": "webpack --mode production --devtool hidden-source-map",
-    "lint": "eslint src --ext ts",
-    "test": "jest",
-    "test:watch": "jest --watch"
-  },
-  "devDependencies": {
-    "@types/glob": "^7.2.0",
-    "@types/jest": "^28.1.6",
-    "@types/mocha": "^9.1.1",
-    "@types/node": "16.x",
-    "@types/vscode": "^1.69.0",
-    "@typescript-eslint/eslint-plugin": "^5.27.0",
-    "@typescript-eslint/parser": "^5.27.0",
-    "@vscode/test-electron": "^2.1.3",
-    "eslint": "^8.16.0",
-    "glob": "^8.0.3",
-    "jest": "^28.1.3",
-    "mocha": "^10.0.0",
-    "ts-jest": "^28.0.7",
-    "ts-loader": "^9.3.0",
-    "typescript": "^4.7.2",
-    "webpack": "^5.72.1",
-    "webpack-cli": "^4.9.2"
-  },
-  "dependencies": {
-    "@types/lodash": "^4.14.184",
-    "@types/recursive-readdir": "^2.2.1",
-    "@types/yaml-front-matter": "^4.1.0",
-    "lodash": "^4.17.21",
-    "recursive-readdir": "^2.2.2",
-    "yaml-front-matter": "^4.1.1"
-  }
+   },
+   "scripts": {
+      "vscode:prepublish": "npm run package",
+      "compile": "webpack",
+      "watch": "webpack --watch",
+      "package": "webpack --mode production --devtool hidden-source-map",
+      "lint": "eslint src --ext ts",
+      "test": "jest",
+      "test:watch": "jest --watch"
+   },
+   "devDependencies": {
+      "@types/glob": "^7.2.0",
+      "@types/jest": "^28.1.6",
+      "@types/mocha": "^9.1.1",
+      "@types/node": "16.x",
+      "@types/vscode": "^1.69.0",
+      "@typescript-eslint/eslint-plugin": "^5.27.0",
+      "@typescript-eslint/parser": "^5.27.0",
+      "@vscode/test-electron": "^2.1.3",
+      "eslint": "^8.16.0",
+      "glob": "^8.0.3",
+      "jest": "^28.1.3",
+      "mocha": "^10.0.0",
+      "ts-jest": "^28.0.7",
+      "ts-loader": "^9.3.0",
+      "typescript": "^4.7.2",
+      "webpack": "^5.72.1",
+      "webpack-cli": "^4.9.2"
+   },
+   "dependencies": {
+      "@types/lodash": "^4.14.184",
+      "@types/recursive-readdir": "^2.2.1",
+      "@types/yaml-front-matter": "^4.1.0",
+      "lodash": "^4.17.21",
+      "recursive-readdir": "^2.2.2",
+      "yaml-front-matter": "^4.1.1"
+   }
 }

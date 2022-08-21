@@ -1,6 +1,6 @@
 import * as vscode from "vscode"
 import { IndexMetadata } from "./IndexMetadata/IndexMetadata"
-import { MetadataListingProvider } from "./IndexMetadata/views/MetadataListingProvider"
+import { MetadataListingProvider } from "./IndexMetadata/MetadataListingProvider.provider"
 
 export async function activate(context: vscode.ExtensionContext) {
   // console.log(vscode.workspace.getConfiguration().get("meridian.ignoreDirs"))

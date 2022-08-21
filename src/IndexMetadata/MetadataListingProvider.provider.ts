@@ -1,7 +1,7 @@
-import { IndexMetadata } from "../IndexMetadata"
+import { IndexMetadata } from "./IndexMetadata"
 import * as vscode from "vscode"
 import * as _ from "lodash"
-import { IMetadataIndex } from "../IndexMetadata"
+import { IMetadataIndex } from "./IndexMetadata"
 
 export class MetadataListingProvider
   implements vscode.TreeDataProvider<TreeItem>

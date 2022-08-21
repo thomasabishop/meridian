@@ -11,7 +11,7 @@
   ],
   "activationEvents": [
     "onView:tags",
-    "onView:tagsRefactor"
+    "onView:categories"
   ],
   "main": "./dist/extension.js",
   "contributes": {
@@ -27,6 +27,10 @@
     "views": {
       "meridian": [
         {
+          "id": "categories",
+          "name": "Categories"
+        },
+        {
           "id": "tags",
           "name": "Tags"
         }
@@ -35,7 +39,12 @@
     "commands": [
       {
         "command": "tags.reindex",
-        "title": "Re-index document metadata",
+        "title": "Re-index project tags",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "cats.reindex",
+        "title": "Re-index project categories",
         "icon": "$(refresh)"
       }
     ],
@@ -44,6 +53,11 @@
         {
           "command": "tags.reindex",
           "when": "view == tags",
+          "group": "navigation"
+        },
+        {
+          "command": "cats.reindex",
+          "when": "view == categories",
           "group": "navigation"
         }
       ]

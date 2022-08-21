@@ -6,11 +6,13 @@ import * as readDirRecurse from "recursive-readdir"
 
 export class IndexMetadata {
   private readonly projectRootDir: string | undefined
+  private metadataType: string
   private dirsToIgnore = [".git"]
 
-  constructor(projectRootDir: string | undefined) {
+  constructor(projectRootDir: string | undefined, metadataType: string) {
     this.projectRootDir = projectRootDir
     this.setDirsToIgnore()
+    this.metadataType = metadataType
   }
 
   public async main(): Promise<IMetadataIndex[] | string | undefined> {
@@ -87,13 +89,14 @@ export class IndexMetadata {
     }
 
     const fileContents = await fs.promises.readFile(markdownFile, "utf-8")
-    const tagsForFile = yamlFrontMatter.loadFront(fileContents).tags
-    if (tagsForFile === undefined || tagsForFile === null) {
+    const metadataTypeForFile =
+      yamlFrontMatter.loadFront(fileContents)[this.metadataType]
+    if (metadataTypeForFile === undefined || metadataTypeForFile === null) {
       // TODO: Raise VSCode toast and write unindexable file to Extension log
       return
     } else {
-      return tagsForFile.map((tag: string) => ({
-        token: tag,
+      return metadataTypeForFile.map((metadatumType: string) => ({
+        token: metadatumType,
         file: markdownFile,
         fileTitle: this.parseFileTitle(markdownFile),
       }))

@@ -8,13 +8,15 @@ export class MetadataListingProvider
 {
   private metadataIndex: Promise<TreeItem[] | undefined>
   private readonly projectRoot
+  private readonly metadataType: string
   private _onDidChangeTreeData: vscode.EventEmitter<undefined | null | void> =
     new vscode.EventEmitter<undefined | null | void>()
   readonly onDidChangeTreeData: vscode.Event<undefined | null | void> =
     this._onDidChangeTreeData.event
 
-  constructor(projectRoot: string) {
+  constructor(projectRoot: string, metadataType: string) {
     this.projectRoot = projectRoot
+    this.metadataType = metadataType
     this.metadataIndex = this.generateMetadataIndex()
   }
 
@@ -40,7 +42,7 @@ export class MetadataListingProvider
   }
 
   private async generateMetadataIndex() {
-    const indexer = new IndexMetadata(this.projectRoot)
+    const indexer = new IndexMetadata(this.projectRoot, this.metadataType)
     const data = await indexer.main()
     if (data !== undefined && typeof data !== "string") {
       return this.transformMetadataToTreeItem(data)

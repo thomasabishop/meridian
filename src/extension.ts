@@ -1,5 +1,4 @@
 import * as vscode from "vscode"
-import { IndexMetadata } from "./IndexMetadata/IndexMetadata"
 import { MetadataListingProvider } from "./IndexMetadata/MetadataListingProvider.provider"
 
 export async function activate(context: vscode.ExtensionContext) {
@@ -10,13 +9,21 @@ export async function activate(context: vscode.ExtensionContext) {
       ? vscode.workspace.workspaceFolders[0].uri.fsPath
       : undefined
 
-  const metadataListingProvider = new MetadataListingProvider(
-    rootPath as string
+  // Initialize category listing view
+  const categoryListing = new MetadataListingProvider(
+    rootPath as string,
+    "categories"
+  )
+  vscode.window.registerTreeDataProvider("categories", categoryListing)
+  vscode.commands.registerCommand("cats.reindex", () =>
+    categoryListing.refreshIndex()
   )
 
-  vscode.window.registerTreeDataProvider("tags", metadataListingProvider)
+  // Initialize tag listing view
+  const tagListing = new MetadataListingProvider(rootPath as string, "tags")
+  vscode.window.registerTreeDataProvider("tags", tagListing)
   vscode.commands.registerCommand("tags.reindex", () =>
-    metadataListingProvider.refreshIndex()
+    tagListing.refreshIndex()
   )
 }
 

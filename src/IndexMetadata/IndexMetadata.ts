@@ -88,7 +88,7 @@ export class IndexMetadata {
 
     const fileContents = await fs.promises.readFile(markdownFile, "utf-8")
     const tagsForFile = yamlFrontMatter.loadFront(fileContents).tags
-    if (tagsForFile === undefined) {
+    if (tagsForFile === undefined || tagsForFile === null) {
       // TODO: Raise VSCode toast and write unindexable file to Extension log
       return
     } else {

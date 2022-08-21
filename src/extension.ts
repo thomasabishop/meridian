@@ -15,16 +15,25 @@ export async function activate(context: vscode.ExtensionContext) {
     "categories"
   )
   vscode.window.registerTreeDataProvider("categories", categoryListing)
-  vscode.commands.registerCommand("cats.reindex", () =>
-    categoryListing.refreshIndex()
+
+  // Add reindex command for categories as disposable subscription
+  const reindexCategoriesCommand = vscode.commands.registerCommand(
+    "cats.reindex",
+    () => categoryListing.refreshIndex()
   )
 
   // Initialize tag listing view
   const tagListing = new MetadataListingProvider(rootPath as string, "tags")
   vscode.window.registerTreeDataProvider("tags", tagListing)
-  vscode.commands.registerCommand("tags.reindex", () =>
-    tagListing.refreshIndex()
+
+  // Add reindex command for tags as disposable subscription
+  const reindexTagsCommand = vscode.commands.registerCommand(
+    "tags.reindex",
+    () => tagListing.refreshIndex()
   )
+
+  // Add to subscriptions context to dispose on Extension deactivation
+  context.subscriptions.push(reindexCategoriesCommand, reindexTagsCommand)
 }
 
 // this method is called when your extension is deactivated

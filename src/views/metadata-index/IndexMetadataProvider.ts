@@ -1,9 +1,9 @@
 import { IndexMetadata } from "./IndexMetadata"
 import * as vscode from "vscode"
-import * as _ from "lodash"
+import * as lodash from "lodash"
 import { IMetadataIndex } from "./IndexMetadata"
 
-export class MetadataListingProvider
+export class IndexMetadataProvider
    implements vscode.TreeDataProvider<TreeItem>
 {
    private metadataIndex: Promise<TreeItem[] | undefined>
@@ -41,7 +41,7 @@ export class MetadataListingProvider
       this._onDidChangeTreeData.fire()
    }
 
-   private async generateMetadataIndex() {
+   private async generateMetadataIndex(): Promise<TreeItem[] | undefined> {
       const indexer = new IndexMetadata(this.projectRoot, this.metadataType)
       const data = await indexer.main()
       if (data !== undefined && typeof data !== "string") {
@@ -71,7 +71,7 @@ export class MetadataListingProvider
             ])
       )
       // Sort alphabetically
-      transformed = _.orderBy(transformed, ["label"], ["asc"])
+      transformed = lodash.orderBy(transformed, ["label"], ["asc"])
       return [...transformed]
    }
 }

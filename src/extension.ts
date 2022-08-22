@@ -1,7 +1,6 @@
 import { FileSystemUtils } from "./utils/FileSystemUtils"
 import * as vscode from "vscode"
-import { MetadataListingProvider } from "./IndexMetadata/MetadataListingProvider.provider"
-
+import { IndexMetadataProvider } from "./views/metadata-index/IndexMetadataProvider"
 export async function activate(context: vscode.ExtensionContext) {
    // console.log(vscode.workspace.getConfiguration().get("meridian.ignoreDirs"))
    const rootPath =
@@ -11,7 +10,7 @@ export async function activate(context: vscode.ExtensionContext) {
          : undefined
 
    // Initialize category listing view
-   const categoryListing = new MetadataListingProvider(
+   const categoryListing = new IndexMetadataProvider(
       rootPath as string,
       "categories"
       /*  */
@@ -25,7 +24,7 @@ export async function activate(context: vscode.ExtensionContext) {
       )
 
    // Initialize tag listing view
-   const tagListing: MetadataListingProvider = new MetadataListingProvider(
+   const tagListing: IndexMetadataProvider = new IndexMetadataProvider(
       rootPath as string,
       "tags"
    )

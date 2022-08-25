@@ -1,57 +1,53 @@
-import { FileSystemUtils } from "./utils/FileSystemUtils"
 import * as vscode from "vscode"
+import { FileSystemUtils } from "./utils/FileSystemUtils"
 import { IndexMetadataProvider } from "./views/metadata-index/IndexMetadataProvider"
+import VsCodeExtensionScaffold from "./utils/VsCodeExtensionScaffold"
+
 export async function activate(context: vscode.ExtensionContext) {
-   // console.log(vscode.workspace.getConfiguration().get("meridian.ignoreDirs"))
-   const rootPath =
-      vscode.workspace.workspaceFolders &&
-      vscode.workspace.workspaceFolders.length > 0
-         ? vscode.workspace.workspaceFolders[0].uri.fsPath
-         : undefined
+   const extScaffold = new VsCodeExtensionScaffold(context)
+   let executeOnSave: vscode.Disposable
 
-   // Initialize category listing view
-   const categoryListing = new IndexMetadataProvider(
-      rootPath as string,
+   /**
+    * Register Views
+    */
+   const categoriesView = new IndexMetadataProvider(
+      extScaffold.workspaceRoot as string,
       "categories"
-      /*  */
    )
-   vscode.window.registerTreeDataProvider("categories", categoryListing)
+   vscode.window.registerTreeDataProvider("categories", categoriesView)
 
-   // Add reindex command for categories as disposable subscription
-   const reindexCategoriesCommand: vscode.Disposable =
-      vscode.commands.registerCommand("cats.reindex", () =>
-         categoryListing.refreshIndex()
-      )
-
-   // Initialize tag listing view
-   const tagListing: IndexMetadataProvider = new IndexMetadataProvider(
-      rootPath as string,
+   const tagsView: IndexMetadataProvider = new IndexMetadataProvider(
+      extScaffold.workspaceRoot as string,
       "tags"
    )
-   vscode.window.registerTreeDataProvider("tags", tagListing)
+   vscode.window.registerTreeDataProvider("tags", tagsView)
 
-   // Add reindex command for tags as disposable subscription
-   const reindexTagsCommand: vscode.Disposable =
-      vscode.commands.registerCommand("tags.reindex", () =>
-         tagListing.refreshIndex()
-      )
+   /**
+    * Register VsCode commands and add to subscription context
+    */
+   extScaffold.registerCommands([
+      {
+         name: "cats.reindex",
+         command: () => categoriesView.refreshIndex(),
+      },
+      {
+         name: "tags.reindex",
+         command: () => tagsView.refreshIndex(),
+      },
+   ])
 
-   const reindexOnSave: vscode.Disposable =
-      vscode.workspace.onDidSaveTextDocument((event) => {
-         const fsUtils = new FileSystemUtils()
-         const refeshIndices = (): void => {
-            categoryListing.refreshIndex()
-            tagListing.refreshIndex()
-         }
-         return fsUtils.fileIsMd(event.fileName) && refeshIndices()
-      })
+   /**
+    * Functions to execute on save of MD file
+    */
 
-   // Add to subscriptions context to dispose on Extension deactivation
-   context.subscriptions.push(
-      reindexCategoriesCommand,
-      reindexTagsCommand,
-      reindexOnSave
-   )
+   executeOnSave = vscode.workspace.onDidSaveTextDocument((event) => {
+      const fsUtils = new FileSystemUtils()
+      const refeshIndices = (): void => {
+         categoriesView.refreshIndex()
+         tagsView.refreshIndex()
+      }
+      return fsUtils.fileIsMd(event.fileName) && refeshIndices()
+   })
 }
 
 // this method is called when your extension is deactivated

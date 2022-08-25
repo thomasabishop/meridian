@@ -5,7 +5,6 @@ import VsCodeExtensionScaffold from "./utils/VsCodeExtensionScaffold"
 
 export async function activate(context: vscode.ExtensionContext) {
    const extScaffold = new VsCodeExtensionScaffold(context)
-   let executeOnSave: vscode.Disposable
 
    /**
     * Register Views
@@ -40,7 +39,7 @@ export async function activate(context: vscode.ExtensionContext) {
     * Functions to execute on save of MD file
     */
 
-   executeOnSave = vscode.workspace.onDidSaveTextDocument((event) => {
+   vscode.workspace.onDidSaveTextDocument((event) => {
       const fsUtils = new FileSystemUtils()
       const refeshIndices = (): void => {
          categoriesView.refreshIndex()

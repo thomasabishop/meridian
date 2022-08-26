@@ -3,6 +3,11 @@ import * as vscode from "vscode"
 import * as lodash from "lodash"
 import { IMetadataIndex } from "./IndexMetadata"
 
+/**
+ * Extension of the default VS Code TreeDataProvider.
+ * Used to create TreeViews of markdown metadata.
+ */
+
 export class IndexMetadataProvider
    implements vscode.TreeDataProvider<TreeItem>
 {

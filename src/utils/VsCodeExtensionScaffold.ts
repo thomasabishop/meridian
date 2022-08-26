@@ -1,5 +1,8 @@
-import { FileSystemUtils } from "./FileSystemUtils"
 import * as vscode from "vscode"
+
+/**
+ * Helper abstractions to make the `extension.ts` entrypoint less cluttered and convoluted.
+ */
 
 export default class VsCodeExtensionScaffold {
    public workspaceRoot: string | undefined

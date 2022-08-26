@@ -4,6 +4,9 @@ import * as vscode from "vscode"
 import * as yamlFrontMatter from "yaml-front-matter"
 import * as readDirRecurse from "recursive-readdir"
 
+/**
+ * Create indices of Markdown frontmatter.
+ */
 export class IndexMetadata {
    private readonly projectRootDir: string | undefined
    private metadataType: string

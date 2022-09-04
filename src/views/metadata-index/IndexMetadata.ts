@@ -1,30 +1,26 @@
 import * as fs from "fs"
 import * as path from "path"
-import * as vscode from "vscode"
 import * as yamlFrontMatter from "yaml-front-matter"
-import * as readDirRecurse from "recursive-readdir"
 
 /**
  * Create indices of Markdown frontmatter.
  */
-export class IndexMetadata {
-   private readonly projectRootDir: string | undefined
-   private metadataType: string
-   private dirsToIgnore = [".git"]
 
-   constructor(projectRootDir: string | undefined, metadataType: string) {
-      this.projectRootDir = projectRootDir
-      this.setDirsToIgnore()
+export class IndexMetadata {
+   private metadataType: string
+   private workspaceFiles: string[] | undefined
+
+   constructor(workspaceFiles: string[], metadataType: string) {
       this.metadataType = metadataType
+      this.workspaceFiles = workspaceFiles
    }
 
    public async main(): Promise<IMetadataIndex[] | string | undefined> {
-      const files = await this.getDirFiles()
       let parsed: IMetadatum[] = []
-      if (files === undefined) {
+      if (this.workspaceFiles === undefined) {
          return
       }
-      for (const file of files) {
+      for (const file of this.workspaceFiles) {
          let metadata = await this.parseFileFrontmatter(file)
          metadata !== undefined && parsed.push(...metadata)
       }
@@ -58,40 +54,11 @@ export class IndexMetadata {
       return index
    }
 
-   private async getDirFiles(): Promise<string[] | undefined> {
-      try {
-         const dirContents = await readDirRecurse(
-            path.resolve(this.projectRootDir as string),
-            [...this.dirsToIgnore]
-         )
-         return dirContents
-      } catch (err: unknown) {
-         if (err instanceof Error) {
-            console.error(err.message)
-         }
-      }
-   }
-
-   private setDirsToIgnore(): void {
-      let ignoreDirs = vscode.workspace
-         .getConfiguration()
-         .get("meridian.ignoreDirs") as string[]
-      if (ignoreDirs?.length) {
-         this.dirsToIgnore.push(...ignoreDirs)
-      } else {
-         return
-      }
-   }
-
    private async parseFileFrontmatter(
       markdownFile: string
    ): Promise<IMetadatum[] | undefined> {
-      if (!this.fileIsMd(markdownFile)) {
-         // TODO: Raise VSCode toast and write unindexable file to Extension log
-         return
-      }
-
       const fileContents = await fs.promises.readFile(markdownFile, "utf-8")
+
       const metadataTypeForFile =
          yamlFrontMatter.loadFront(fileContents)[this.metadataType]
       if (metadataTypeForFile === undefined || metadataTypeForFile === null) {
@@ -108,10 +75,6 @@ export class IndexMetadata {
 
    private parseFileTitle(filePath: string): string {
       return path.parse(filePath).name.split("_").join(" ")
-   }
-
-   public fileIsMd(file: string): boolean {
-      return path.extname(file) === ".md"
    }
 }
 

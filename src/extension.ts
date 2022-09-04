@@ -1,16 +1,15 @@
 import * as vscode from "vscode"
-import { FileSystemUtils } from "./utils/FileSystemUtils"
+import { WorkspaceUtils } from "./utils/WorkspaceUtils"
 import { IndexMetadataProvider } from "./views/metadata-index/IndexMetadataProvider"
 import IndexHyperlinks from "./views/hyperlinks-index/IndexHyperlinks"
 
 export async function activate(context: vscode.ExtensionContext) {
-   // const extScaffold = new VsCodeExtensionScaffold(context)
+   const workspaceUtils = new WorkspaceUtils(context)
+   const workspaceFiles = await workspaceUtils.readFromWorkspaceContext(
+      "MERIDIAN_FILES"
+   )
 
-   const workspaceRoot =
-      vscode.workspace.workspaceFolders &&
-      vscode.workspace.workspaceFolders.length > 0
-         ? vscode.workspace.workspaceFolders[0].uri.fsPath
-         : undefined
+   workspaceUtils.indexWorkspaceFiles()
 
    /**
     * Register Views, and updaters
@@ -18,7 +17,8 @@ export async function activate(context: vscode.ExtensionContext) {
 
    // Categories View
    const categoriesView = new IndexMetadataProvider(
-      workspaceRoot as string,
+      workspaceUtils.workspaceRoot as string,
+      workspaceFiles,
       "categories"
    )
    vscode.window.registerTreeDataProvider("categories", categoriesView)
@@ -30,7 +30,8 @@ export async function activate(context: vscode.ExtensionContext) {
 
    // Tags View
    const tagsView: IndexMetadataProvider = new IndexMetadataProvider(
-      workspaceRoot as string,
+      workspaceUtils.workspaceRoot as string,
+      workspaceFiles,
       "tags"
    )
    vscode.window.registerTreeDataProvider("tags", tagsView)
@@ -41,28 +42,61 @@ export async function activate(context: vscode.ExtensionContext) {
       )
 
    /**
-    * Functions to execute on save of MD file
+    * Functions to execute on Workspace events
     */
 
-   const reindexMetadataonSave = vscode.workspace.onDidSaveTextDocument(
+   const reindexFilesOnMdFileCreation = vscode.workspace.onDidCreateFiles(
       (event) => {
-         const fsUtils = new FileSystemUtils()
+         let containsMarkdown = event.files.some((uri) =>
+            workspaceUtils.fileIsMd(uri.toString())
+         )
+         return containsMarkdown && workspaceUtils.indexWorkspaceFiles()
+      }
+   )
+
+   const reindexFilesOnMdFileDeletion = vscode.workspace.onDidDeleteFiles(
+      (event) => {
+         let containsMarkdown = event.files.some((uri) =>
+            workspaceUtils.fileIsMd(uri.toString())
+         )
+
+         return containsMarkdown && workspaceUtils.indexWorkspaceFiles()
+      }
+   )
+
+   const reindexFilesOnMdFileRenaming = vscode.workspace.onDidRenameFiles(
+      (event) => {
+         let containsMarkdown = event.files.some((uri) =>
+            workspaceUtils.fileIsMd(uri.toString())
+         )
+
+         return containsMarkdown && workspaceUtils.indexWorkspaceFiles()
+      }
+   )
+
+   const reindexMetadataOnMdFileSave = vscode.workspace.onDidSaveTextDocument(
+      (event) => {
          const refeshIndices = (): void => {
             categoriesView.refreshIndex()
             tagsView.refreshIndex()
          }
-         return fsUtils.fileIsMd(event.fileName) && refeshIndices()
+         return workspaceUtils.fileIsMd(event.fileName) && refeshIndices()
       }
+      // TODO: Check this fires on event
    )
 
    // Add commands and functions to subscriptions context to dispose on Extension deactivation
+
    context.subscriptions.push(
       reindexCategoriesCommand,
       reindexTagsCommand,
-      reindexMetadataonSave
+      reindexMetadataOnMdFileSave,
+      reindexFilesOnMdFileCreation,
+      reindexFilesOnMdFileDeletion,
+      reindexFilesOnMdFileRenaming
    )
 
-   const indexHyperlinks = new IndexHyperlinks(workspaceRoot)
+   const indexHyperlinks = new IndexHyperlinks(workspaceFiles as string[])
    indexHyperlinks.returnOutlinks()
 }
 

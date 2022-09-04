@@ -29,10 +29,6 @@ export class WorkspaceUtils {
       }
    }
 
-   public fileIsMd(file: string): boolean {
-      return path.extname(file) === ".md"
-   }
-
    //   Create index of all Markdown files in workspace and store in VsCode Context
 
    public async writeToWorkspaceContext(

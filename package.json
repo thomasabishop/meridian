@@ -12,10 +12,25 @@
    "activationEvents": [
       "onView:tags",
       "onView:categories",
+      "onView:outlinks",
       "onFileSystem:scheme"
    ],
    "main": "./dist/extension.js",
    "contributes": {
+      "viewsWelcome": [
+         {
+            "view": "categories",
+            "contents": "This workspace contains no category data. \n Add YAML frontmatter to your documents to create indexable metadata."
+         },
+         {
+            "view": "tags",
+            "contents": "This workspace contains no tag data. \n Add YAML frontmatter to your documents to create indexable metadata."
+         },
+         {
+            "view": "outlinks",
+            "contents": "This file contains no outlinks."
+         }
+      ],
       "viewsContainers": {
          "activitybar": [
             {
@@ -27,6 +42,10 @@
       },
       "views": {
          "meridian": [
+            {
+               "id": "outlinks",
+               "name": "Outlinks"
+            },
             {
                "id": "categories",
                "name": "Categories"

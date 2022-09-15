@@ -11,7 +11,6 @@ import { IMetadataIndex } from "./IndexMetadata"
 export class IndexMetadataProvider
    implements vscode.TreeDataProvider<TreeItem>
 {
-   private readonly projectRoot
    private readonly metadataType: string
    private workspaceFiles: string[] | undefined
    private metadataIndex: Promise<TreeItem[] | undefined>
@@ -21,8 +20,7 @@ export class IndexMetadataProvider
    readonly onDidChangeTreeData: vscode.Event<undefined | null | void> =
       this._onDidChangeTreeData.event
 
-   constructor(projectRoot: string, workspaceFiles: any, metadataType: string) {
-      this.projectRoot = projectRoot
+   constructor(workspaceFiles: string[] | undefined, metadataType: string) {
       this.workspaceFiles = workspaceFiles
       this.metadataType = metadataType
       this.metadataIndex = this.generateMetadataIndex()
@@ -66,14 +64,16 @@ export class IndexMetadataProvider
       let transformed: TreeItem[]
 
       const populateTreeItemChildren = (fileRefs: IMetadataIndex["files"]) =>
-         fileRefs.map(
-            (fileRef: any) =>
-               new TreeItem(fileRef.fileTitle, undefined, {
-                  command: "vscode.open",
-                  title: "",
-                  arguments: [vscode.Uri.file(fileRef.filePath)],
-               })
-         )
+         fileRefs
+            .filter((fileRef) => fileRef.fileTitle !== undefined)
+            .map(
+               (fileRef: { filePath: string; fileTitle?: string }) =>
+                  new TreeItem(fileRef!.fileTitle as string, undefined, {
+                     command: "vscode.open",
+                     title: "",
+                     arguments: [vscode.Uri.file(fileRef.filePath)],
+                  })
+            )
 
       transformed = metadataIndex.map(
          (datum: IMetadataIndex) =>

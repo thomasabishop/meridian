@@ -7,7 +7,8 @@
       "rootDir": "src",
       "strict": true,
       "types": ["jest"],
-      "typeRoots": ["./types", "./node_modules/@types"]
+      "typeRoots": ["./types", "./node_modules/@types"],
+      "strictPropertyInitialization": false
    },
    "exclude": ["node_modules", "**/*.spec.ts", "**/*.test.ts"],
    "include": ["./src/**/*.tsx", "./src/**/*.ts", "decs.d.ts"]

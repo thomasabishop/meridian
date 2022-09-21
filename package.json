@@ -10,10 +10,7 @@
       "Other"
    ],
    "activationEvents": [
-      "onView:tags",
-      "onView:categories",
-      "onView:outlinks",
-      "onFileSystem:scheme"
+      "onLanguage:markdown"
    ],
    "main": "./dist/extension.js",
    "contributes": {
@@ -25,6 +22,10 @@
          {
             "view": "tags",
             "contents": "This workspace contains no tag data. \n Add YAML frontmatter to your documents to create indexable metadata."
+         },
+         {
+            "view": "inlinks",
+            "contents": "This file contains no inlinks"
          },
          {
             "view": "outlinks",
@@ -43,16 +44,20 @@
       "views": {
          "meridian": [
             {
-               "id": "outlinks",
-               "name": "Outlinks"
-            },
-            {
                "id": "categories",
                "name": "Categories"
             },
             {
                "id": "tags",
                "name": "Tags"
+            },
+            {
+               "id": "outlinks",
+               "name": "Outlinks"
+            },
+            {
+               "id": "inlinks",
+               "name": "Inlinks"
             }
          ]
       },

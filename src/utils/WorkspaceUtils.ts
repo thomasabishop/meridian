@@ -1,68 +1,117 @@
+import { CustomTypeGuards } from "./CustomTypeGuards"
+import { WorkspaceContextUtils } from "./WorkspaceContextUtils"
 import * as path from "path"
 import * as vscode from "vscode"
 import * as readDirRecurse from "recursive-readdir"
+import { FileSystemUtils } from "./FileSystemUtils"
+import { IndexHyperlinks } from "./../views/hyperlinks-index/IndexHyperlinks"
+import { IndexMetadata } from "./../views/metadata-index/IndexMetadata"
 
 export class WorkspaceUtils {
-   public workspaceRoot: string | undefined
-   public dirsToIgnore = [".git"]
+   public workspaceFiles: any
+   private _workspaceRoot: string | undefined
+   private _dirsToIgnore: string[] | undefined
    private context: vscode.ExtensionContext
+   private workspaceContextUtils: WorkspaceContextUtils
+   private fileSystemUtils: FileSystemUtils
+   private indexMetadata: IndexMetadata = new IndexMetadata()
+   private customTypeGuard: CustomTypeGuards = new CustomTypeGuards()
 
    constructor(context: vscode.ExtensionContext) {
       this.context = context
-      this.workspaceRoot = this.setWorkspaceRoot()
-      this.setDirsToIgnore()
+      this._workspaceRoot = this.determineWorkspaceRoot()
+      this.workspaceFiles = this.collateWorkspaceFiles()
+      this._dirsToIgnore = this.retrieveDirsToIgnore(".git")
+      this.workspaceContextUtils = new WorkspaceContextUtils(context)
+      this.fileSystemUtils = new FileSystemUtils(this._workspaceRoot)
    }
 
-   //   Create index of all Markdown files in workspace and store in VsCode Context
+   public get workspaceRoot() {
+      return this._workspaceRoot
+   }
 
-   public async indexWorkspaceFiles(): Promise<void> {
-      try {
-         const dirContents = await readDirRecurse(
-            path.resolve(this.workspaceRoot as string),
-            [...this.dirsToIgnore]
+   private get dirsToIgnore() {
+      return this._dirsToIgnore
+   }
+
+   public async createMeridianMap(): Promise<void | undefined> {
+      const meridianMap = new Map<string, IWorkspaceMap>()
+      const workspace = await this.indexWorkspace()
+      if (workspace !== undefined) {
+         workspace.map((entry) => {
+            meridianMap.set(entry.fullPath, entry)
+         })
+
+         return await this.workspaceContextUtils.writeToWorkspaceContext(
+            "MERIDIAN",
+            meridianMap
          )
-         this.writeToWorkspaceContext("MERIDIAN_FILES", dirContents)
-      } catch (err: unknown) {
-         if (err instanceof Error) {
-            console.error(err.message)
-         }
       }
    }
 
-   //   Create index of all Markdown files in workspace and store in VsCode Context
-
-   public async writeToWorkspaceContext(
-      key: string,
-      value: any
-   ): Promise<void> {
-      await this.context.workspaceState.update(key, value)
+   private async collateWorkspaceFiles(): Promise<string[] | undefined> {
+      if (typeof this._workspaceRoot === "string") {
+         return await readDirRecurse(
+            path.resolve(this._workspaceRoot),
+            this.dirsToIgnore
+         )
+      }
    }
 
-   public async readFromWorkspaceContext(
-      key: string
-   ): Promise<string[] | undefined> {
-      return await this.context.workspaceState.get(key)
+   private async indexWorkspace(): Promise<IWorkspaceMap[] | undefined> {
+      const allFiles = await this.collateWorkspaceFiles()
+      if (this.customTypeGuard.isStringArray(allFiles)) {
+         const indexHyperlinks: IndexHyperlinks = new IndexHyperlinks(
+            this.context,
+            allFiles
+         )
+         let workspace: IWorkspaceMap[] = []
+         for (const file of allFiles) {
+            let categories = await this.indexMetadata.extractMetadataForFile(
+               file,
+               "categories"
+            )
+            let tags = await this.indexMetadata.extractMetadataForFile(
+               file,
+               "tags"
+            )
+            let outlinks = await indexHyperlinks.parseFileForLinks(file)
+            workspace.push({
+               fullPath: file,
+               title: this.fileSystemUtils.parseFileTitle(file),
+               categories: categories,
+               tags: tags,
+               outlinks: outlinks,
+            })
+         }
+         return workspace
+      }
    }
 
-   public async clearWorkspaceContextItem(key: string): Promise<void> {
-      await this.context.workspaceState.update(key, undefined)
-   }
-
-   private setWorkspaceRoot(): string | undefined {
+   private determineWorkspaceRoot(): string | undefined {
       return vscode.workspace.workspaceFolders &&
          vscode.workspace.workspaceFolders.length > 0
          ? vscode.workspace.workspaceFolders[0].uri.fsPath
          : undefined
    }
 
-   private setDirsToIgnore(): void {
+   private retrieveDirsToIgnore(inp: string) {
       const ignoreDirs = vscode.workspace
          .getConfiguration()
          .get("meridian.ignoreDirs") as string[]
       if (!ignoreDirs?.length) {
          return
       }
-
-      this.dirsToIgnore.push(...ignoreDirs)
+      if (ignoreDirs !== undefined) {
+         return [inp, ...ignoreDirs]
+      }
    }
+}
+
+export interface IWorkspaceMap {
+   title: string
+   fullPath: string
+   categories?: string[]
+   tags?: string[]
+   outlinks?: string[]
 }

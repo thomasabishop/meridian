@@ -1,7 +1,7 @@
+import { FileSystemUtils } from "./utils/FileSystemUtils"
 import { IndexInlinksProvider } from "./views/hyperlinks-index/IndexInlinksProvider"
 import { WorkspaceContextUtils } from "./utils/WorkspaceContextUtils"
 import { IndexOutlinksProvider } from "./views/hyperlinks-index/IndexOutlinksProvider"
-import { FileSystemUtils } from "./utils/FileSystemUtils"
 import * as vscode from "vscode"
 import { WorkspaceUtils } from "./utils/WorkspaceUtils"
 import { IndexMetadataProvider } from "./views/metadata-index/IndexMetadataProvider"
@@ -11,10 +11,11 @@ export async function activate(context: vscode.ExtensionContext) {
 
    await workspaceUtils
       .createMeridianMap()
-      .then(() => {
+      .then(async () => {
          const workspaceFiles = workspaceUtils.workspaceFiles
          const workspaceRoot = workspaceUtils.workspaceRoot
          const activeEditor = vscode.window.activeTextEditor?.document.fileName
+         const fileSystemUtils = new FileSystemUtils(workspaceRoot)
 
          /**
           * Register views on initialisation
@@ -40,148 +41,85 @@ export async function activate(context: vscode.ExtensionContext) {
          inlinksView.refresh(activeEditor)
          vscode.window.registerTreeDataProvider("inlinks", inlinksView)
 
+         // METADATA INDICES
+
+         const categoriesView = new IndexMetadataProvider(context, "categories")
+         categoriesView.refreshIndex()
+         vscode.window.registerTreeDataProvider("categories", categoriesView)
+
+         const tagsView = new IndexMetadataProvider(context, "tags")
+         tagsView.refreshIndex()
+         vscode.window.registerTreeDataProvider("tags", tagsView)
+
          /**
           * Refresh views on workspace events
+          * // TODO: Need to rewrite most of these so that it is just a file that is being added/deleted from the Meridian map, to remove the need to reindex every file.
           */
 
-         // HYPERLINKS
          const refreshHyperlinks = vscode.window.onDidChangeActiveTextEditor(
-            () => {
-               inlinksView.refresh(
-                  vscode.window.activeTextEditor?.document.fileName
-               )
-               outlinksView.refresh(
-                  vscode.window.activeTextEditor?.document.fileName
-               )
+            (event) => {
+               inlinksView.refresh(event?.document.fileName)
+               outlinksView.refresh(event?.document.fileName)
             }
          )
 
+         const updateMeridianMapOnFileSave =
+            vscode.workspace.onDidSaveTextDocument(async (event) => {
+               let isMarkdownSave = fileSystemUtils.fileIsMd(event.fileName)
+               if (isMarkdownSave) {
+                  await workspaceUtils.createMeridianMap().then(() => {
+                     categoriesView.refreshIndex()
+                     tagsView.refreshIndex()
+                     outlinksView.refresh(event.fileName)
+                     inlinksView.refresh(event.fileName)
+                  })
+               }
+            })
+
+         const updateMeridianMapOnFileRename =
+            vscode.workspace.onDidRenameFiles(async (event) => {
+               let isMarkdownRename = event.files.some((uri) =>
+                  fileSystemUtils.fileIsMd(uri.toString())
+               )
+               if (isMarkdownRename) {
+                  await workspaceUtils.createMeridianMap()
+               }
+            })
+
+         const updateMeridianMapOnFileDelete =
+            vscode.workspace.onDidDeleteFiles(async (event) => {
+               let isMarkdownRename = event.files.some((uri) =>
+                  fileSystemUtils.fileIsMd(uri.toString())
+               )
+               if (isMarkdownRename) {
+                  await workspaceUtils.createMeridianMap()
+               }
+            })
+
+         const updateMeridianMapOnFileCreate =
+            vscode.workspace.onDidRenameFiles(async (event) => {
+               let isMarkdownRename = event.files.some((uri) =>
+                  fileSystemUtils.fileIsMd(uri.toString())
+               )
+               if (isMarkdownRename) {
+                  await workspaceUtils.createMeridianMap()
+               }
+            })
          /**
           * Subscription disposal
           */
-         context.subscriptions.push(refreshHyperlinks)
+         context.subscriptions.push(
+            refreshHyperlinks,
+            updateMeridianMapOnFileSave,
+            updateMeridianMapOnFileRename,
+            updateMeridianMapOnFileDelete,
+            updateMeridianMapOnFileCreate
+         )
       })
 
       .catch((err) => {
          console.error(err)
       })
-
-   // console.log(workspace)
-
-   // workspaceUtils.indexWorkspaceFiles().then(async () => {
-   //    const workspaceFiles = await workspaceUtils.readFromWorkspaceContext(
-   //       "MERIDIAN_FILES"
-   //    )
-
-   //    // console.log(context.workspaceState)
-   //    /**
-   //     * Register Views, and updaters
-   //     */
-
-   //    const linksView = new IndexHyperlinksProvider(
-   //       vscode.window.activeTextEditor?.document.fileName,
-   //       workspaceFiles
-   //    )
-   //    linksView.refresh()
-   //    vscode.window.registerTreeDataProvider("outlinks", linksView)
-
-   //    // Categories View
-   //    const categoriesView = new IndexMetadataProvider(
-   //       workspaceFiles,
-   //       "categories"
-   //    )
-   //    categoriesView.refreshIndex()
-   //    vscode.window.registerTreeDataProvider("categories", categoriesView)
-
-   //    const reindexCategoriesCommand: vscode.Disposable =
-   //       vscode.commands.registerCommand("cats.reindex", () =>
-   //          categoriesView.refreshIndex()
-   //       )
-
-   //    // Tags View
-   //    const tagsView: IndexMetadataProvider = new IndexMetadataProvider(
-   //       workspaceFiles,
-   //       "tags"
-   //    )
-   //    vscode.window.registerTreeDataProvider("tags", tagsView)
-
-   //    const reindexTagsCommand: vscode.Disposable =
-   //       vscode.commands.registerCommand("tags.reindex", () =>
-   //          tagsView.refreshIndex()
-   //       )
-
-   //    /**
-   //     * Functions to execute on Workspace events
-   //     */
-
-   //    const reindexFilesOnMdFileCreation = vscode.workspace.onDidCreateFiles(
-   //       (event) => {
-   //          let containsMarkdown = event.files.some((uri) =>
-   //             fileSystemUtils.fileIsMd(uri.toString())
-   //          )
-   //          return containsMarkdown && workspaceUtils.indexWorkspaceFiles()
-   //       }
-   //    )
-
-   //    const reindexFilesOnMdFileDeletion = vscode.workspace.onDidDeleteFiles(
-   //       (event) => {
-   //          let containsMarkdown = event.files.some((uri) =>
-   //             fileSystemUtils.fileIsMd(uri.toString())
-   //          )
-
-   //          return containsMarkdown && workspaceUtils.indexWorkspaceFiles()
-   //       }
-   //    )
-
-   //    const reindexFilesOnMdFileRenaming = vscode.workspace.onDidRenameFiles(
-   //       (event) => {
-   //          let containsMarkdown = event.files.some((uri) =>
-   //             fileSystemUtils.fileIsMd(uri.toString())
-   //          )
-
-   //          return containsMarkdown && workspaceUtils.indexWorkspaceFiles()
-   //       }
-   //    )
-
-   //    const reindexMetadataOnMdFileSave =
-   //       vscode.workspace.onDidSaveTextDocument(
-   //          (event) => {
-   //             const refeshIndices = (): void => {
-   //                categoriesView.refreshIndex()
-   //                tagsView.refreshIndex()
-   //             }
-   //             return (
-   //                fileSystemUtils.fileIsMd(event.fileName) && refeshIndices()
-   //             )
-   //          }
-   //          // TODO: Check this fires on event
-   //       )
-
-   //    const reindexHyperlinks = vscode.window.onDidChangeActiveTextEditor(
-   //       () => {
-   //          //   linksView.updateActiveFile(activeFile)
-   //          linksView.setActiveFile(
-   //             vscode.window.activeTextEditor?.document.fileName
-   //          )
-   //          linksView.refresh()
-   //       }
-   //    )
-
-   //    // Add commands and functions to subscriptions context to dispose on Extension deactivation
-
-   //    context.subscriptions.push(
-   //       reindexCategoriesCommand,
-   //       reindexTagsCommand,
-   //       reindexMetadataOnMdFileSave,
-   //       reindexFilesOnMdFileCreation,
-   //       reindexFilesOnMdFileDeletion,
-   //       reindexFilesOnMdFileRenaming,
-   //       reindexHyperlinks
-   //    )
-   // })
-
-   // const indexHyperlinks = new IndexHyperlinks(workspaceFiles as string[])
-   // indexHyperlinks.returnOutlinks()
 }
 
 // this method is called when your extension is deactivated

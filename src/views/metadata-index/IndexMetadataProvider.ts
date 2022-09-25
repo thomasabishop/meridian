@@ -11,6 +11,7 @@ import { IMetadataIndex } from "./IndexMetadata"
 export class IndexMetadataProvider
    implements vscode.TreeDataProvider<TreeItem>
 {
+   private context: vscode.ExtensionContext
    private readonly metadataType: string
    private workspaceFiles: string[] | undefined
    private metadataIndex: Promise<TreeItem[] | undefined>
@@ -20,8 +21,11 @@ export class IndexMetadataProvider
    readonly onDidChangeTreeData: vscode.Event<undefined | null | void> =
       this._onDidChangeTreeData.event
 
-   constructor(workspaceFiles: string[] | undefined, metadataType: string) {
-      this.workspaceFiles = workspaceFiles
+   constructor(
+      workspaceContext: vscode.ExtensionContext,
+      metadataType: string
+   ) {
+      this.context = workspaceContext
       this.metadataType = metadataType
       this.metadataIndex = this.generateMetadataIndex()
    }
@@ -48,11 +52,8 @@ export class IndexMetadataProvider
    }
 
    private async generateMetadataIndex(): Promise<TreeItem[] | undefined> {
-      const indexer = new IndexMetadata(
-         this.workspaceFiles as string[],
-         this.metadataType
-      )
-      const data = await indexer.main()
+      const indexer = new IndexMetadata(this.context)
+      const data = await indexer.collateAllMetadataOfType(this.metadataType)
       if (data !== undefined && typeof data !== "string") {
          return this.transformMetadataToTreeItem(data)
       }

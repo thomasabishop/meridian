@@ -14,7 +14,7 @@ export class WorkspaceUtils {
    private context: vscode.ExtensionContext
    private workspaceContextUtils: WorkspaceContextUtils
    private fileSystemUtils: FileSystemUtils
-   private indexMetadata: IndexMetadata = new IndexMetadata()
+   private indexMetadata: IndexMetadata
    private customTypeGuard: CustomTypeGuards = new CustomTypeGuards()
 
    constructor(context: vscode.ExtensionContext) {
@@ -24,6 +24,7 @@ export class WorkspaceUtils {
       this._dirsToIgnore = this.retrieveDirsToIgnore(".git")
       this.workspaceContextUtils = new WorkspaceContextUtils(context)
       this.fileSystemUtils = new FileSystemUtils(this._workspaceRoot)
+      this.indexMetadata = new IndexMetadata(context)
    }
 
    public get workspaceRoot() {

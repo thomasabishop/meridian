@@ -1,8 +1,8 @@
 import * as markdownLinkExtractor from "markdown-link-extractor"
 import * as fs from "fs"
 import * as vscode from "vscode"
-import { IWorkspaceMap } from "./../../utils/WorkspaceUtils"
-import { WorkspaceContextUtils } from "./../../utils/WorkspaceContextUtils"
+import { IWorkspaceMap } from "../../../utils/WorkspaceUtils"
+import { WorkspaceContextUtils } from "./../../../utils/WorkspaceContextUtils"
 
 export class IndexHyperlinks {
    private workspaceContextUtils: WorkspaceContextUtils

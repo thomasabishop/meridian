@@ -1,10 +1,10 @@
-import { FileSystemUtils } from "./utils/FileSystemUtils"
-import { IndexInlinksProvider } from "./views/hyperlinks-index/IndexInlinksProvider"
-import { WorkspaceContextUtils } from "./utils/WorkspaceContextUtils"
-import { IndexOutlinksProvider } from "./views/hyperlinks-index/IndexOutlinksProvider"
 import * as vscode from "vscode"
+import { FileSystemUtils } from "./utils/FileSystemUtils"
+import { WorkspaceContextUtils } from "./utils/WorkspaceContextUtils"
+import { IndexInlinksProvider } from "./views/treeviews/hyperlinks-index/IndexInlinksProvider"
+import { IndexOutlinksProvider } from "./views/treeviews/hyperlinks-index/IndexOutlinksProvider"
 import { WorkspaceUtils } from "./utils/WorkspaceUtils"
-import { IndexMetadataProvider } from "./views/metadata-index/IndexMetadataProvider"
+import { IndexMetadataProvider } from "./views/treeviews/metadata-index/IndexMetadataProvider"
 
 export async function activate(context: vscode.ExtensionContext) {
    const workspaceUtils = new WorkspaceUtils(context)

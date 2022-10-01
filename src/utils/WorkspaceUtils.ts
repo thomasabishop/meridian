@@ -4,8 +4,8 @@ import * as path from "path"
 import * as vscode from "vscode"
 import * as readDirRecurse from "recursive-readdir"
 import { FileSystemUtils } from "./FileSystemUtils"
-import { IndexHyperlinks } from "./../views/hyperlinks-index/IndexHyperlinks"
-import { IndexMetadata } from "./../views/metadata-index/IndexMetadata"
+import { IndexHyperlinks } from "../views/treeviews/hyperlinks-index/IndexHyperlinks"
+import { IndexMetadata } from "../views/treeviews/metadata-index/IndexMetadata"
 
 export class WorkspaceUtils {
    public workspaceFiles: any

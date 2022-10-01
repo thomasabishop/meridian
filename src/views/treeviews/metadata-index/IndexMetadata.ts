@@ -1,8 +1,8 @@
 import * as fs from "fs"
 import * as yamlFrontMatter from "yaml-front-matter"
 import * as vscode from "vscode"
-import { IWorkspaceMap } from "./../../utils/WorkspaceUtils"
-import { WorkspaceContextUtils } from "./../../utils/WorkspaceContextUtils"
+import { IWorkspaceMap } from "../../../utils/WorkspaceUtils"
+import { WorkspaceContextUtils } from "./../../../utils/WorkspaceContextUtils"
 
 /**
  * Create indices of Markdown frontmatter.

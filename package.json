@@ -63,26 +63,46 @@
       },
       "commands": [
          {
-            "command": "tags.reindex",
-            "title": "Re-index project tags",
-            "icon": "$(refresh)"
+            "command": "cats.scope",
+            "title": "Show categories for current document only",
+            "icon": "$(filter)"
          },
          {
-            "command": "cats.reindex",
-            "title": "Re-index project categories",
-            "icon": "$(refresh)"
+            "command": "cats.resetScope",
+            "title": "Show categories for entire project",
+            "icon": "$(filter-filled)"
+         },
+         {
+            "command": "tags.scope",
+            "title": "Show tags for current document only",
+            "icon": "$(filter)"
+         },
+         {
+            "command": "tags.resetScope",
+            "title": "Show tags for entire project",
+            "icon": "$(filter-filled)"
          }
       ],
       "menus": {
          "view/title": [
             {
-               "command": "tags.reindex",
-               "when": "view == tags",
+               "command": "cats.scope",
+               "when": "view == categories && !meridian:scopeCats",
                "group": "navigation"
             },
             {
-               "command": "cats.reindex",
-               "when": "view == categories",
+               "command": "cats.resetScope",
+               "when": "view == categories && meridian:scopeCats",
+               "group": "navigation"
+            },
+            {
+               "command": "tags.scope",
+               "when": "view == tags && !meridian:scopeTags",
+               "group": "navigation"
+            },
+            {
+               "command": "tags.resetScope",
+               "when": "view == tags && meridian:scopeTags",
                "group": "navigation"
             }
          ]

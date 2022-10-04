@@ -45,7 +45,7 @@ export class IndexHyperlinks {
       }
    }
 
-   // Extract local links from MD file, reconstruct as absolute links, filter-out links to non-existent files
+   // Extract local links from MD file, reconstruct as absolute links, filter-out links to non-existent files:
 
    public async parseFileForLinks(
       file: string
@@ -57,7 +57,7 @@ export class IndexHyperlinks {
          .filter((link: string | undefined) => link !== undefined)
    }
 
-   // Clean-up relative links that bugger up the vscode Uri, by matching against file index
+   // Clean-up relative links that bugger up the vscode Uri, by matching against file index:
 
    private sanitiseHyperlinks(link: string): string | void {
       const parseData = {
@@ -79,14 +79,14 @@ export class IndexHyperlinks {
          : parseData.link + "#" + parseData.fragment
    }
 
-   // Remove relative path tokens (eg. `../`, `././` etc) and anchor fragments
+   // Remove relative path tokens (eg. `../`, `././` etc) and anchor fragments:
 
    private stripToBaseLink(link: string): string {
       link = vscode.Uri.file(link)?.path.replace(/^(?:\.\.\/)+/, "")
       return this.linkContainsFragment(link) ? link.split("#")[0] : link
    }
 
-   // Identify whether link contains anchor fragment
+   // Identify whether link contains anchor fragment:
    // e.g /files/doc.md#section-one
 
    private linkContainsFragment(link: string): boolean {

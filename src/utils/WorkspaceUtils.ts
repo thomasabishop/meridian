@@ -1,4 +1,4 @@
-import { CustomTypeGuards } from "./CustomTypeGuards"
+import { CustomTypeGuards } from "../types/CustomTypeGuards"
 import { WorkspaceContextUtils } from "./WorkspaceContextUtils"
 import * as path from "path"
 import * as vscode from "vscode"
@@ -6,7 +6,7 @@ import * as readDirRecurse from "recursive-readdir"
 import { FileSystemUtils } from "./FileSystemUtils"
 import { IndexHyperlinks } from "../views/treeviews/hyperlinks-index/IndexHyperlinks"
 import { IndexMetadata } from "../views/treeviews/metadata-index/IndexMetadata"
-
+import { ValueOf } from "../types/ValueOf"
 export class WorkspaceUtils {
    public workspaceFiles: any
    private _workspaceRoot: string | undefined
@@ -47,6 +47,22 @@ export class WorkspaceUtils {
             "MERIDIAN",
             meridianMap
          )
+      }
+   }
+
+   public async filterMapEntryForPropertyOfType(
+      propType: string,
+      mapKey: string
+   ): Promise<string | string[] | undefined> {
+      if (mapKey !== undefined) {
+         const meridianMap =
+            await this.workspaceContextUtils.readFromWorkspaceContext(
+               "MERIDIAN"
+            )
+         const mapEntry = meridianMap?.get(mapKey)
+         if (mapEntry !== undefined) {
+            return mapEntry[propType]
+         }
       }
    }
 
@@ -110,9 +126,12 @@ export class WorkspaceUtils {
 }
 
 export interface IWorkspaceMap {
+   [key: string]: string | string[] | undefined
    title: string
    fullPath: string
    categories?: string[]
    tags?: string[]
    outlinks?: string[]
 }
+
+export type ValueOfIWorkspaceMap = ValueOf<IWorkspaceMap>

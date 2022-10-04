@@ -8,7 +8,6 @@ import { IndexMetadataProvider } from "./views/treeviews/metadata-index/IndexMet
 
 export async function activate(context: vscode.ExtensionContext) {
    const workspaceUtils = new WorkspaceUtils(context)
-
    await workspaceUtils
       .createMeridianMap()
       .then(async () => {
@@ -18,10 +17,10 @@ export async function activate(context: vscode.ExtensionContext) {
          const fileSystemUtils = new FileSystemUtils(workspaceRoot)
 
          /**
-          * Register views on initialisation
+          * Register views
           */
 
-         // HYPERLINKS
+         // Hyperlinks
 
          const outlinksView = new IndexOutlinksProvider(
             vscode.window.activeTextEditor?.document.fileName,
@@ -41,7 +40,7 @@ export async function activate(context: vscode.ExtensionContext) {
          inlinksView.refresh(activeEditor)
          vscode.window.registerTreeDataProvider("inlinks", inlinksView)
 
-         // METADATA INDICES
+         // Metadata indices
 
          const categoriesView = new IndexMetadataProvider(context, "categories")
          categoriesView.refreshIndex()
@@ -52,16 +51,30 @@ export async function activate(context: vscode.ExtensionContext) {
          vscode.window.registerTreeDataProvider("tags", tagsView)
 
          /**
-          * Refresh views on workspace events
-          * // TODO: Need to rewrite most of these so that it is just a file that is being added/deleted from the Meridian map, to remove the need to reindex every file.
+          * Actions to execute on workspace events
+         
+         * // TODO: Need to rewrite most of these so that it is just a file that is being added/deleted from the Meridian map, to remove the need to reindex every file.
           */
 
-         const refreshHyperlinks = vscode.window.onDidChangeActiveTextEditor(
-            (event) => {
+         const onChangeEditorActions =
+            vscode.window.onDidChangeActiveTextEditor((event) => {
+               // Refresh inlinks:
                inlinksView.refresh(event?.document.fileName)
+
+               // Refresh outlinks:
                outlinksView.refresh(event?.document.fileName)
-            }
-         )
+
+               // Clear category scoping:
+               categoriesView.updateTreeviewScopedStatus(
+                  false,
+                  "meridian:scopeCats"
+               )
+               categoriesView.refreshIndex()
+
+               // Clear tag scoping:
+               tagsView.updateTreeviewScopedStatus(false, "meridian:scopeTags")
+               tagsView.refreshIndex()
+            })
 
          const updateMeridianMapOnFileSave =
             vscode.workspace.onDidSaveTextDocument(async (event) => {
@@ -105,15 +118,68 @@ export async function activate(context: vscode.ExtensionContext) {
                   await workspaceUtils.createMeridianMap()
                }
             })
+
          /**
-          * Subscription disposal
+          * Commands
           */
+
+         // Show categories for the current editor only:
+         const scopeCatsCommand: vscode.Disposable =
+            vscode.commands.registerCommand("cats.scope", () => {
+               categoriesView.filterMetadataIndexForCurrentFile(
+                  "categories",
+                  vscode.window.activeTextEditor?.document.fileName
+               ),
+                  categoriesView.updateTreeviewScopedStatus(
+                     true,
+                     "meridian:scopeCats"
+                  )
+            })
+
+         // Show all categories:
+         const scopeCatsResetCommand: vscode.Disposable =
+            vscode.commands.registerCommand("cats.resetScope", () => {
+               categoriesView.updateTreeviewScopedStatus(
+                  false,
+                  "meridian:scopeCats"
+               )
+               categoriesView.refreshIndex()
+            })
+
+         // Show tags for the current editor only:
+         const scopeTagsCommand: vscode.Disposable =
+            vscode.commands.registerCommand("tags.scope", () => {
+               tagsView.filterMetadataIndexForCurrentFile(
+                  "tags",
+                  vscode.window.activeTextEditor?.document.fileName
+               ),
+                  tagsView.updateTreeviewScopedStatus(
+                     true,
+                     "meridian:scopeTags"
+                  )
+            })
+
+         // Show all tags:
+         const scopeTagsResetCommand: vscode.Disposable =
+            vscode.commands.registerCommand("tags.resetScope", () => {
+               tagsView.updateTreeviewScopedStatus(false, "meridian:scopeTags")
+               tagsView.refreshIndex()
+            })
+
+         /**
+          * Subscriptions
+          */
+
          context.subscriptions.push(
-            refreshHyperlinks,
+            onChangeEditorActions,
             updateMeridianMapOnFileSave,
             updateMeridianMapOnFileRename,
             updateMeridianMapOnFileDelete,
-            updateMeridianMapOnFileCreate
+            updateMeridianMapOnFileCreate,
+            scopeCatsCommand,
+            scopeCatsResetCommand,
+            scopeTagsCommand,
+            scopeTagsResetCommand
          )
       })
 

@@ -1,3 +1,4 @@
+import { IWorkspaceMap, WorkspaceUtils } from "./../../../utils/WorkspaceUtils"
 import { IndexMetadata } from "./IndexMetadata"
 import * as vscode from "vscode"
 import * as lodash from "lodash"
@@ -13,8 +14,7 @@ export class IndexMetadataProvider
 {
    private context: vscode.ExtensionContext
    private readonly metadataType: string
-   private workspaceFiles: string[] | undefined
-   private metadataIndex: Promise<TreeItem[] | undefined>
+   private metadataIndex: Promise<TreeItem[] | undefined> | TreeItem[]
 
    private _onDidChangeTreeData: vscode.EventEmitter<undefined | null | void> =
       new vscode.EventEmitter<undefined | null | void>()
@@ -57,6 +57,37 @@ export class IndexMetadataProvider
       if (data !== undefined && typeof data !== "string") {
          return this.transformMetadataToTreeItem(data)
       }
+   }
+
+   // Return segment of metadata scoped to the currently active editor:
+   public async filterMetadataIndexForCurrentFile(
+      metadataType: string | undefined, // categories or tags
+      activeFile: string | undefined
+   ): Promise<void> {
+      const workspaceUtils = new WorkspaceUtils(this.context)
+      if (activeFile !== undefined && metadataType !== undefined) {
+         const metadataForFile =
+            await workspaceUtils.filterMapEntryForPropertyOfType(
+               metadataType,
+               activeFile
+            )
+
+         const index = await this.metadataIndex
+         const filtered = index?.filter((treeItem: TreeItem) =>
+            metadataForFile?.includes(treeItem.label as string)
+         )
+
+         if (filtered?.length) {
+            this.metadataIndex = filtered
+            this._onDidChangeTreeData.fire()
+         }
+         return
+      }
+   }
+
+   // Toggle a value in context to mark whether the given Metadata view is scoped to the current file:
+   public updateTreeviewScopedStatus(isScoped: boolean, contextToggle: string) {
+      vscode.commands.executeCommand("setContext", contextToggle, isScoped)
    }
 
    private transformMetadataToTreeItem(

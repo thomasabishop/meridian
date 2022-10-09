@@ -67,7 +67,7 @@ export class IndexMetadataProvider
       const workspaceUtils = new WorkspaceUtils(this.context)
       if (activeFile !== undefined && metadataType !== undefined) {
          const metadataForFile =
-            await workspaceUtils.filterMapEntryForPropertyOfType(
+            await workspaceUtils.filterMeridianMapForPropertyOfType(
                metadataType,
                activeFile
             )

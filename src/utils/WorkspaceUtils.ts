@@ -50,7 +50,7 @@ export class WorkspaceUtils {
       }
    }
 
-   public async filterMapEntryForPropertyOfType(
+   public async filterMeridianMapForPropertyOfType(
       propType: string,
       mapKey: string
    ): Promise<string | string[] | undefined> {
@@ -133,5 +133,3 @@ export interface IWorkspaceMap {
    tags?: string[]
    outlinks?: string[]
 }
-
-export type ValueOfIWorkspaceMap = ValueOf<IWorkspaceMap>

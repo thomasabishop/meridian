@@ -25,7 +25,7 @@ export class IndexMetadata {
          let type =
             metadataType === "categories" ? value.categories : value.tags
          if (type !== undefined) {
-            for (const instance of type!) {
+            for (const instance of type) {
                if (!metadataIndex.some((x) => x.token === instance)) {
                   metadataIndex.push({
                      token: instance,

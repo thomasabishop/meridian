@@ -1,20 +1,32 @@
-# meridian README
+# Meridian
 
-This is the README for your extension "meridian". After writing up a brief description, we recommend including the following sections.
+Meridian provides a series of VSCode views designed to improve the experience of working with large Markdown knowledge bases.
 
-## Features
+The primary motivation is to bring [Obsidian]()-like functionality to VSCode in a way that harnesses the existing built-in Markdown support, reducing the need for the developer to use separate note-management software, without the burden of custom markup syntax. If you write Markdown and are prepared to use YAML frontmatter, you can get started with Meridian right away.
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+## Feature Overview
 
-For example if there is an image subfolder under your extension project workspace:
+-  Filter workspace files by categories and tags at a global and local file level
+-  Isolate backlinks and outlinks for each Markdown file (without the need for custom link syntax)
+-  View the relationship between files, links and their associated metadata with an integrated network graph
 
-\!\[feature X\]\(images/feature-x.png\)
+## Example Usage
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+Meridian loops recursively through each directory identifying Markdown files and indexing their metadata to produce the core four [tree-views](): _Categories_, _Tags_, _Inlinks_, and _Outlinks_. This data is then aggregated to produce the network graph [web-view]().
 
-## Requirements
+In order to index metadata, each Markdown file should contain the following YAML frontmatter, e.g:
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+```
+---
+title: Symlinks
+categories:
+  - Linux
+  - Programming Languages
+tags: [shell, bash]
+---
+```
+
+> The `title` property is optional. If you do not provide a title, this will be derived from the filename via your chosen string delimiter.
 
 ## Extension Settings
 
@@ -26,6 +38,8 @@ This extension contributes the following settings:
 
 -  `myExtension.enable`: enable/disable this extension
 -  `myExtension.thing`: set to `blah` to do something
+
+## Feature Demonstration
 
 ## Known Issues
 
@@ -46,26 +60,3 @@ Fixed issue #.
 ### 1.1.0
 
 Added features X, Y, and Z.
-
----
-
-## Following extension guidelines
-
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
-
--  [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
-
-## Working with Markdown
-
-**Note:** You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
-
--  Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux)
--  Toggle preview (`Shift+CMD+V` on macOS or `Shift+Ctrl+V` on Windows and Linux)
--  Press `Ctrl+Space` (Windows, Linux) or `Cmd+Space` (macOS) to see a list of Markdown snippets
-
-### For more information
-
--  [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
--  [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**

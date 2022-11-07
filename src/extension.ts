@@ -5,17 +5,17 @@ import { IndexInlinksProvider } from "./views/treeviews/hyperlinks-index/IndexIn
 import { IndexOutlinksProvider } from "./views/treeviews/hyperlinks-index/IndexOutlinksProvider"
 import { WorkspaceUtils } from "./utils/WorkspaceUtils"
 import { IndexMetadataProvider } from "./views/treeviews/metadata-index/IndexMetadataProvider"
-
+import { title } from "process"
 export async function activate(context: vscode.ExtensionContext) {
    const workspaceUtils = new WorkspaceUtils(context)
    await workspaceUtils
       .createMeridianMap()
       .then(async () => {
-         const workspaceFiles = workspaceUtils.workspaceFiles
+         const workspaceFiles = await workspaceUtils.workspaceFiles
          const workspaceRoot = workspaceUtils.workspaceRoot
          const activeEditor = vscode.window.activeTextEditor?.document.fileName
          const fileSystemUtils = new FileSystemUtils(workspaceRoot)
-
+         const workspaceContextutils = new WorkspaceContextUtils(context)
          /**
           * Register views
           */
@@ -52,8 +52,6 @@ export async function activate(context: vscode.ExtensionContext) {
 
          /**
           * Actions to execute on workspace events
-         
-         * // TODO: Need to rewrite most of these so that it is just a file that is being added/deleted from the Meridian map, to remove the need to reindex every file.
           */
 
          const onChangeEditorActions =
@@ -76,46 +74,54 @@ export async function activate(context: vscode.ExtensionContext) {
                tagsView.refreshIndex()
             })
 
-         const updateMeridianMapOnFileSave =
+         const updateWorkspaceMapOnFileSave =
             vscode.workspace.onDidSaveTextDocument(async (event) => {
-               let isMarkdownSave = fileSystemUtils.fileIsMd(event.fileName)
-               if (isMarkdownSave) {
-                  await workspaceUtils.createMeridianMap().then(() => {
-                     categoriesView.refreshIndex()
-                     tagsView.refreshIndex()
-                     outlinksView.refresh(event.fileName)
-                     inlinksView.refresh(event.fileName)
-                  })
+               if (fileSystemUtils.fileIsMd(event.fileName)) {
+                  await workspaceUtils
+                     .indexSingleFile(event.fileName)
+                     .then(() => {
+                        categoriesView.refreshIndex()
+                        tagsView.refreshIndex()
+                        outlinksView.refresh(event.fileName)
+                        inlinksView.refresh(event.fileName)
+                     })
                }
             })
 
          const updateMeridianMapOnFileRename =
             vscode.workspace.onDidRenameFiles(async (event) => {
-               let isMarkdownRename = event.files.some((uri) =>
-                  fileSystemUtils.fileIsMd(uri.toString())
+               const isMarkdownRename = event?.files.some((uri) =>
+                  fileSystemUtils.fileIsMd(uri?.newUri.toString())
                )
+
                if (isMarkdownRename) {
-                  await workspaceUtils.createMeridianMap()
+                  const { oldUri, newUri } = event?.files[0]
+
+                  await workspaceContextutils.updateWorkspaceMapEntryProp(
+                     "title",
+                     oldUri.path,
+                     fileSystemUtils.parseFileTitle(newUri.path)
+                  )
+
+                  await workspaceContextutils.updateWorkspaceMapEntryProp(
+                     "fullPath",
+                     oldUri.path,
+                     newUri.path
+                  )
                }
             })
 
          const updateMeridianMapOnFileDelete =
             vscode.workspace.onDidDeleteFiles(async (event) => {
-               let isMarkdownRename = event.files.some((uri) =>
-                  fileSystemUtils.fileIsMd(uri.toString())
-               )
-               if (isMarkdownRename) {
-                  await workspaceUtils.createMeridianMap()
-               }
-            })
-
-         const updateMeridianMapOnFileCreate =
-            vscode.workspace.onDidRenameFiles(async (event) => {
-               let isMarkdownRename = event.files.some((uri) =>
-                  fileSystemUtils.fileIsMd(uri.toString())
-               )
-               if (isMarkdownRename) {
-                  await workspaceUtils.createMeridianMap()
+               if (event.files) {
+                  await Promise.all(
+                     event.files.map(async (file) => {
+                        workspaceContextutils.deleteWorkspaceMapEntry(file.path)
+                     })
+                  ).then(() => {
+                     categoriesView.refreshIndex()
+                     tagsView.refreshIndex()
+                  })
                }
             })
 
@@ -172,10 +178,9 @@ export async function activate(context: vscode.ExtensionContext) {
 
          context.subscriptions.push(
             onChangeEditorActions,
-            updateMeridianMapOnFileSave,
+            updateWorkspaceMapOnFileSave,
             updateMeridianMapOnFileRename,
             updateMeridianMapOnFileDelete,
-            updateMeridianMapOnFileCreate,
             scopeCatsCommand,
             scopeCatsResetCommand,
             scopeTagsCommand,
@@ -191,6 +196,6 @@ export async function activate(context: vscode.ExtensionContext) {
 // this method is called when your extension is deactivated
 export async function deactivate(context: vscode.ExtensionContext) {
    // Delete workspace data on deactivation
-   const workspaceContextUtils = new WorkspaceContextUtils(context)
-   await workspaceContextUtils.clearWorkspaceContextItem("MERIDIAN")
+   // const workspaceContextUtils = new WorkspaceContextUtils(context)
+   // await workspaceContextUtils.clearWorkspaceContextItem("MERIDIAN")
 }

@@ -1,12 +1,13 @@
 import * as markdownLinkExtractor from "markdown-link-extractor"
 import * as fs from "fs"
 import * as vscode from "vscode"
-import { IWorkspaceMap } from "../../../utils/WorkspaceUtils"
+import IWorkspaceMap from "../../../types/IWorkspaceMap"
+
 import { WorkspaceContextUtils } from "./../../../utils/WorkspaceContextUtils"
 
 export class IndexHyperlinks {
    private workspaceContextUtils: WorkspaceContextUtils
-   private workspaceFiles: string[]
+   public workspaceFiles: string[]
 
    constructor(context: vscode.ExtensionContext, workspaceFiles: string[]) {
       this.workspaceContextUtils = new WorkspaceContextUtils(context)
@@ -51,38 +52,37 @@ export class IndexHyperlinks {
       file: string
    ): Promise<IWorkspaceMap["outlinks"]> {
       const fileContents = await fs.promises.readFile(file, "utf-8")
-      return markdownLinkExtractor(fileContents)
-         .filter((link: string) => /\.(md)+$|\.(md)#/.test(link))
-         .map((link: string) => this.sanitiseHyperlinks(link))
-         .filter((link: string | undefined) => link !== undefined)
+      return (
+         markdownLinkExtractor(fileContents) // array of all links
+            // filtered to internal links
+            .filter((link: string) => /\.(md)+$|\.(md)#/.test(link))
+            .map((link: string) => this.sanitiseLink(link))
+      )
    }
 
-   // Clean-up relative links that bugger up the vscode Uri, by matching against file index:
+   // Check link is well-formed and corresponds to document in workspace
+   private sanitiseLink(link: string): string | void {
+      let output
+      const baselink = this.stripToBaseLink(link)
+      const baseLinkExistsInWorkspace = this.workspaceFiles?.filter((file) =>
+         file.includes(baselink)
+      )
 
-   private sanitiseHyperlinks(link: string): string | void {
-      const parseData = {
-         link:
-            this.workspaceFiles?.filter((file) =>
-               file.includes(this.stripToBaseLink(link))
-            )[0] || undefined,
-         fragment: this.linkContainsFragment(link)
-            ? link.match(/#(.*)/)![1]
-            : undefined,
-      }
-
-      if (parseData?.link === undefined) {
+      if (baseLinkExistsInWorkspace.length) {
+         output = baseLinkExistsInWorkspace[0]
+         if (this.linkContainsFragment(link)) {
+            output =
+               baseLinkExistsInWorkspace[0] + "#" + link.match(/#(.*)/)![1]
+         }
+      } else {
          return
       }
 
-      return parseData.fragment === undefined
-         ? parseData.link
-         : parseData.link + "#" + parseData.fragment
+      return output
    }
 
    // Remove relative path tokens (eg. `../`, `././` etc) and anchor fragments:
-
    private stripToBaseLink(link: string): string {
-      link = vscode.Uri.file(link)?.path.replace(/^(?:\.\.\/)+/, "")
       return this.linkContainsFragment(link) ? link.split("#")[0] : link
    }
 

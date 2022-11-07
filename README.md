@@ -2,7 +2,7 @@
 
 Meridian provides a series of VSCode views designed to improve the experience of working with large Markdown knowledge bases.
 
-The primary motivation is to bring [Obsidian]()-like functionality to VSCode in a way that harnesses the existing built-in Markdown support, reducing the need for the developer to use separate note-management software, without the burden of custom markup syntax. If you write Markdown and are prepared to use YAML frontmatter, you can get started with Meridian right away.
+## Feature Overviewan useful.
 
 ## Feature Overview
 

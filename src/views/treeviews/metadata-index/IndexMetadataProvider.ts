@@ -1,8 +1,10 @@
-import { IWorkspaceMap, WorkspaceUtils } from "./../../../utils/WorkspaceUtils"
+import { WorkspaceContextUtils } from "./../../../utils/WorkspaceContextUtils"
+import { WorkspaceUtils } from "./../../../utils/WorkspaceUtils"
+import IWorkspaceMap from "../../../types/IWorkspaceMap"
 import { IndexMetadata } from "./IndexMetadata"
 import * as vscode from "vscode"
 import * as lodash from "lodash"
-import { IMetadataIndex } from "./IndexMetadata"
+import IMetadataIndex from "../../../types/IMetadataIndex"
 
 /**
  * Extension of the default VS Code TreeDataProvider.
@@ -61,13 +63,13 @@ export class IndexMetadataProvider
 
    // Return segment of metadata scoped to the currently active editor:
    public async filterMetadataIndexForCurrentFile(
-      metadataType: string | undefined, // categories or tags
+      metadataType: keyof IWorkspaceMap | undefined, // categories or tags
       activeFile: string | undefined
    ): Promise<void> {
-      const workspaceUtils = new WorkspaceUtils(this.context)
+      const workspaceContextUtils = new WorkspaceContextUtils(this.context)
       if (activeFile !== undefined && metadataType !== undefined) {
          const metadataForFile =
-            await workspaceUtils.filterMeridianMapForPropertyOfType(
+            await workspaceContextUtils.retrieveWorkspaceMapEntryProp(
                metadataType,
                activeFile
             )

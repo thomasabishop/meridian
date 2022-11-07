@@ -6,11 +6,10 @@ import * as readDirRecurse from "recursive-readdir"
 import { FileSystemUtils } from "./FileSystemUtils"
 import { IndexHyperlinks } from "../views/treeviews/hyperlinks-index/IndexHyperlinks"
 import { IndexMetadata } from "../views/treeviews/metadata-index/IndexMetadata"
-import { ValueOf } from "../types/ValueOf"
+import IWorkspaceMap from "../types/IWorkspaceMap"
 export class WorkspaceUtils {
-   public workspaceFiles: any
    private _workspaceRoot: string | undefined
-   private _dirsToIgnore: string[] | undefined
+   private dirsToIgnore: string[] | undefined
    private context: vscode.ExtensionContext
    private workspaceContextUtils: WorkspaceContextUtils
    private fileSystemUtils: FileSystemUtils
@@ -20,24 +19,24 @@ export class WorkspaceUtils {
    constructor(context: vscode.ExtensionContext) {
       this.context = context
       this._workspaceRoot = this.determineWorkspaceRoot()
-      this.workspaceFiles = this.collateWorkspaceFiles()
-      this._dirsToIgnore = this.retrieveDirsToIgnore(".git")
+      this.dirsToIgnore = this.retrieveDirsToIgnore(".git")
       this.workspaceContextUtils = new WorkspaceContextUtils(context)
       this.fileSystemUtils = new FileSystemUtils(this._workspaceRoot)
       this.indexMetadata = new IndexMetadata(context)
+   }
+
+   public get workspaceFiles(): any {
+      return this.collateWorkspaceFiles()
    }
 
    public get workspaceRoot() {
       return this._workspaceRoot
    }
 
-   private get dirsToIgnore() {
-      return this._dirsToIgnore
-   }
-
    public async createMeridianMap(): Promise<void | undefined> {
       const meridianMap = new Map<string, IWorkspaceMap>()
       const workspace = await this.indexWorkspace()
+
       if (workspace !== undefined) {
          workspace.map((entry) => {
             meridianMap.set(entry.fullPath, entry)
@@ -50,19 +49,32 @@ export class WorkspaceUtils {
       }
    }
 
-   public async filterMeridianMapForPropertyOfType(
-      propType: string,
-      mapKey: string
-   ): Promise<string | string[] | undefined> {
-      if (mapKey !== undefined) {
-         const meridianMap =
-            await this.workspaceContextUtils.readFromWorkspaceContext(
-               "MERIDIAN"
-            )
-         const mapEntry = meridianMap?.get(mapKey)
-         if (mapEntry !== undefined) {
-            return mapEntry[propType]
+   public async indexSingleFile(
+      file: string
+   ): Promise<Map<string, IWorkspaceMap> | undefined> {
+      const allFiles = await this.collateWorkspaceFiles()
+      if (this.customTypeGuard.isStringArray(allFiles)) {
+         const indexHyperlinks: IndexHyperlinks = new IndexHyperlinks(
+            this.context,
+            allFiles
+         )
+
+         const workspaceEntry: IWorkspaceMap = {
+            fullPath: file,
+            title: this.fileSystemUtils.parseFileTitle(file),
+            categories: await this.indexMetadata.extractMetadataForFile(
+               file,
+               "categories"
+            ),
+            tags: await this.indexMetadata.extractMetadataForFile(file, "tags"),
+            outlinks: await indexHyperlinks.parseFileForLinks(file),
+            inlinks: await indexHyperlinks.indexInlinks(file),
          }
+
+         return await this.workspaceContextUtils.updateWorkspaceMapEntry(
+            file,
+            workspaceEntry
+         )
       }
    }
 
@@ -76,28 +88,28 @@ export class WorkspaceUtils {
    }
 
    private async indexWorkspace(): Promise<IWorkspaceMap[] | undefined> {
-      const allFiles = await this.collateWorkspaceFiles()
+      const allFiles = await this.workspaceFiles
+
       if (this.customTypeGuard.isStringArray(allFiles)) {
          const indexHyperlinks: IndexHyperlinks = new IndexHyperlinks(
             this.context,
             allFiles
          )
          let workspace: IWorkspaceMap[] = []
+         //         console.log(allFiles[0])
          for (const file of allFiles) {
-            let categories = await this.indexMetadata.extractMetadataForFile(
-               file,
-               "categories"
-            )
-            let tags = await this.indexMetadata.extractMetadataForFile(
-               file,
-               "tags"
-            )
             let outlinks = await indexHyperlinks.parseFileForLinks(file)
             workspace.push({
                fullPath: file,
                title: this.fileSystemUtils.parseFileTitle(file),
-               categories: categories,
-               tags: tags,
+               categories: await this.indexMetadata.extractMetadataForFile(
+                  file,
+                  "categories"
+               ),
+               tags: await this.indexMetadata.extractMetadataForFile(
+                  file,
+                  "tags"
+               ),
                outlinks: outlinks,
             })
          }
@@ -105,6 +117,7 @@ export class WorkspaceUtils {
       }
    }
 
+   // Add update method to WorkspaceContextUtils to fully replace singleUpdate func
    private determineWorkspaceRoot(): string | undefined {
       return vscode.workspace.workspaceFolders &&
          vscode.workspace.workspaceFolders.length > 0
@@ -123,13 +136,4 @@ export class WorkspaceUtils {
          return [inp, ...ignoreDirs]
       }
    }
-}
-
-export interface IWorkspaceMap {
-   [key: string]: string | string[] | undefined
-   title: string
-   fullPath: string
-   categories?: string[]
-   tags?: string[]
-   outlinks?: string[]
 }

@@ -1,8 +1,9 @@
 import * as fs from "fs"
 import * as yamlFrontMatter from "yaml-front-matter"
 import * as vscode from "vscode"
-import { IWorkspaceMap } from "../../../utils/WorkspaceUtils"
+import IWorkspaceMap from "../../../types/IWorkspaceMap"
 import { WorkspaceContextUtils } from "./../../../utils/WorkspaceContextUtils"
+import IMetadataIndex from "../../../types/IMetadataIndex"
 
 /**
  * Create indices of Markdown frontmatter.
@@ -56,17 +57,10 @@ export class IndexMetadata {
    ): Promise<IWorkspaceMap["categories"] | IWorkspaceMap["tags"]> {
       const fileContents = await fs.promises.readFile(markdownFile, "utf-8")
       let metadata = yamlFrontMatter.loadFront(fileContents)[metadatumType]
-      if (metadata === undefined || metadata === null) {
+      // eslint-disable-next-line eqeqeq
+      if (metadata == null) {
          return
       }
       return metadata
    }
-}
-
-export interface IMetadataIndex {
-   token: string
-   files: {
-      filePath: string
-      fileTitle?: string | undefined
-   }[]
 }

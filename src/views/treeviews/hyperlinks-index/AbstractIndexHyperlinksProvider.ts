@@ -42,6 +42,7 @@ export abstract class AbstractIndexHyperlinksProvider
    }
 
    public transformLinksToTreeItem(links: string[]): TreeItem[] {
+      links = links.filter((link) => link !== undefined)
       let transformed: TreeItem[]
       transformed = links.map(
          (link) =>

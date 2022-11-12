@@ -5,7 +5,6 @@ import { IndexInlinksProvider } from "./views/treeviews/hyperlinks-index/IndexIn
 import { IndexOutlinksProvider } from "./views/treeviews/hyperlinks-index/IndexOutlinksProvider"
 import { WorkspaceUtils } from "./utils/WorkspaceUtils"
 import { IndexMetadataProvider } from "./views/treeviews/metadata-index/IndexMetadataProvider"
-import { title } from "process"
 export async function activate(context: vscode.ExtensionContext) {
    const workspaceUtils = new WorkspaceUtils(context)
    await workspaceUtils

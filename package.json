@@ -17,19 +17,19 @@
       "viewsWelcome": [
          {
             "view": "categories",
-            "contents": "This workspace contains no category data. \n Add YAML frontmatter to your documents to create indexable metadata."
+            "contents": ""
          },
          {
             "view": "tags",
-            "contents": "This workspace contains no tag data. \n Add YAML frontmatter to your documents to create indexable metadata."
+            "contents": ""
          },
          {
             "view": "inlinks",
-            "contents": "This file contains no inlinks"
+            "contents": ""
          },
          {
             "view": "outlinks",
-            "contents": "This file contains no outlinks."
+            "contents": ""
          }
       ],
       "viewsContainers": {

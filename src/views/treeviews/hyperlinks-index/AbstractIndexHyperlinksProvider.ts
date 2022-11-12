@@ -43,15 +43,16 @@ export abstract class AbstractIndexHyperlinksProvider
 
    public transformLinksToTreeItem(links: string[]): TreeItem[] {
       links = links.filter((link) => link !== undefined)
-      let transformed: TreeItem[]
-      transformed = links.map(
-         (link) =>
-            new TreeItem(this.fileSystemUtils.removeRootPath(link) as string, {
-               command: "vscode.open",
-               title: "",
-               arguments: [link],
-            })
-      )
+      let transformed: TreeItem[] = []
+     for (const link of links) {
+         const treeItem = new TreeItem(this.renderPrettyLink(link), {
+            command: "vscode.open",
+            title: "",
+            arguments: [link],
+         })
+         treeItem.tooltip = this.fileSystemUtils.removeRootPath(link)
+      transformed.push(treeItem)
+     } 
       return transformed
    }
 
@@ -68,6 +69,15 @@ export abstract class AbstractIndexHyperlinksProvider
          return this.hyperlinks
       }
       return element.children
+   }
+
+   private renderPrettyLink(link: string) {
+      const anchorText = this.fileSystemUtils.parseFileTitle(link)
+      if (link.includes("#")) {
+         return `${anchorText} > ${link.split("#")[1]}`
+      } else {
+         return anchorText
+      }
    }
 }
 

@@ -41,7 +41,6 @@ export class IndexHyperlinks {
                inlinks.push(key)
             }
          })
-
          return inlinks
       }
    }

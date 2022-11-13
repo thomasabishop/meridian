@@ -1,7 +1,7 @@
 {
    "name": "meridian",
    "displayName": "Meridian",
-   "description": "Parse, access and organise metadata in large Markdown knowledge bases from within VSCode",
+   "description": "Parse, display and organise metadata in large Markdown knowledge bases from within VSCode",
    "version": "0.0.0",
    "repository": {
       "type": "git",

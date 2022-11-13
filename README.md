@@ -46,7 +46,7 @@ Directories that you do not want to be indexed. Note `.git/` is automatically ig
 
 ```json
 {
-  meridian.ignoreDirs: ["dir-to-ignore"] 
+  "meridian.ignoreDirs": ["dir-to-ignore"] 
 }
 ```
 ## Screenshots 

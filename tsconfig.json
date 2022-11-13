@@ -6,7 +6,7 @@
       "sourceMap": true,
       "rootDir": "src",
       "strict": true,
-      "types": ["jest"],
+      "types": [],
       "typeRoots": ["./types", "./node_modules/@types"],
       "strictPropertyInitialization": false
    },

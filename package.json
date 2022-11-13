@@ -1,8 +1,8 @@
 {
    "name": "meridian",
-   "displayName": "meridian",
-   "description": "tbc",
-   "version": "0.0.1",
+   "displayName": "Meridian",
+   "description": "Parse, access and organise metadata in large Markdown knowledge bases from within VSCode",
+   "version": "0.0.0",
    "engines": {
       "vscode": "^1.69.0"
    },
@@ -37,7 +37,7 @@
             {
                "id": "meridian",
                "title": "Meridian",
-               "icon": "media/logo.svg"
+               "icon": "media/logo-slanted.svg"
             }
          ]
       },

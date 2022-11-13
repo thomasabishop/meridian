@@ -1,62 +1,65 @@
 # Meridian
 
-Meridian provides a series of VSCode views designed to improve the experience of working with large Markdown knowledge bases.
+Meridian provides several VSCode [Tree Views](https://code.visualstudio.com/api/extension-guides/tree-view) designed to improve the experience of working with large Markdown knowledge bases. The long term aim is to bring functionality familiar from tools like [Obsidian](https://obsidian.md/) to VSCode. 
 
-## Feature Overviewan useful.
+> This extension is currently under active development and may contain bugs. For this reason and also because it is primarily designed for personal use, it is not currently available via the Extension store but [releases]() can be [manually installed](https://code.visualstudio.com/docs/editor/extension-marketplace#_install-from-a-vsix) via the VSIX file.
 
-## Feature Overview
+## Features
 
--  Filter workspace files by categories and tags at a global and local file level
--  Isolate backlinks and outlinks for each Markdown file (without the need for custom link syntax)
+-  Filter workspace files by categories and tags at project and file level
+-  Display internal backlinks and outlinks for each project file (without the need for custom link syntax)
+
+### Forthcoming (pipeline)
 -  View the relationship between files, links and their associated metadata with an integrated network graph
+-  Create custom treeviews based on user's own metadata (not limited to just categories and tags) 
+-  Extract file names from YAML `title` value instead of file path 
+ 
 
-## Example Usage
+## Usage
 
-Meridian loops recursively through each directory identifying Markdown files and indexing their metadata to produce the core four [tree-views](): _Categories_, _Tags_, _Inlinks_, and _Outlinks_. This data is then aggregated to produce the network graph [web-view]().
+Meridian loops recursively through each directory identifying Markdown files and indexes their metadata to produce the core four metadata tree-views: 
+* Categories
+* Tags
+* Inlinks
+* Outlinks
 
-In order to index metadata, each Markdown file should contain the following YAML frontmatter, e.g:
-
+In order to generate the indices, each Markdown file should contain the following YAML frontmatter:
 ```
 ---
-title: Symlinks
 categories:
-  - Linux
-  - Programming Languages
-tags: [shell, bash]
+  - Category One
+  - Category Two
+tags: [first_tag, second_tag]
 ---
 ```
+Outlinks and inlinks that point to other local Markdown files within the project are automatically extracted and parsed to populate their respective tree views. To ensure accurate indexation path shorthands should not be used  (e.g. `projectname/subdir/file.md` rather than `././file.md`.) Relative links are permitted.
 
-> The `title` property is optional. If you do not provide a title, this will be derived from the filename via your chosen string delimiter.
+Each view populates a list of links to Markdown files contained within the project, organised by the given metatdatum. The names of these files are parsed from the file path. Currently file paths are parsed based on underscores. Thus `A_file_name.md` will be parsed accurately but `A file name.md` may not.  
 
-## Extension Settings
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
+## Configuration
+Settings can be configured via your VSCode `settings.json` file. 
 
-For example:
+#### `ignoreDirs`
 
-This extension contributes the following settings:
+Directories that you do not want to be indexed. Note `.git/` is automatically ignored. 
 
--  `myExtension.enable`: enable/disable this extension
--  `myExtension.thing`: set to `blah` to do something
+```json
+{
+  meridian.ignoreDirs: ["dir-to-ignore"] 
+}
+```
+## Screenshots 
 
-## Feature Demonstration
+![](/media/screenshot-all.png)
+
+![](/media/screenshot-detail.png)
 
 ## Known Issues
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
 
 ## Release Notes
 
-Users appreciate release notes as you update your extension.
+### 0.0.0
 
-### 1.0.0
-
-Initial release of ...
-
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
+Initial release.

@@ -60,17 +60,6 @@ export async function activate(context: vscode.ExtensionContext) {
 
                // Refresh outlinks:
                outlinksView.refresh(event?.document.fileName)
-
-               // Clear category scoping:
-               categoriesView.updateTreeviewScopedStatus(
-                  false,
-                  "meridian:scopeCats"
-               )
-               categoriesView.refreshIndex()
-
-               // Clear tag scoping:
-               tagsView.updateTreeviewScopedStatus(false, "meridian:scopeTags")
-               tagsView.refreshIndex()
             })
 
          const updateWorkspaceMapOnFileSave =

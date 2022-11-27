@@ -59,6 +59,7 @@ export class WorkspaceUtils {
             allFiles
          )
 
+         const outlinks = await indexHyperlinks.parseFileForLinks(file)
          const workspaceEntry: IWorkspaceMap = {
             fullPath: file,
             title: this.fileSystemUtils.parseFileTitle(file),
@@ -67,7 +68,7 @@ export class WorkspaceUtils {
                "categories"
             ),
             tags: await this.indexMetadata.extractMetadataForFile(file, "tags"),
-            outlinks: await indexHyperlinks.parseFileForLinks(file),
+            outlinks: [...new Set(outlinks)],
             inlinks: await indexHyperlinks.indexInlinks(file),
          }
 
@@ -96,7 +97,6 @@ export class WorkspaceUtils {
             allFiles
          )
          let workspace: IWorkspaceMap[] = []
-         //         console.log(allFiles[0])
          for (const file of allFiles) {
             let outlinks = await indexHyperlinks.parseFileForLinks(file)
             workspace.push({
@@ -110,7 +110,7 @@ export class WorkspaceUtils {
                   file,
                   "tags"
                ),
-               outlinks: outlinks,
+               outlinks: [...new Set(outlinks)],
             })
          }
          return workspace

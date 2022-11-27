@@ -14,6 +14,7 @@ export class IndexHyperlinks {
       this.workspaceFiles = workspaceFiles
    }
 
+   // Retrieve outlinks for a single file, from the existing workspace map
    public async indexOutlinks(
       activeFile: string
    ): Promise<IWorkspaceMap["outlinks"] | undefined> {
@@ -45,7 +46,7 @@ export class IndexHyperlinks {
       }
    }
 
-   // Extract local links from MD file, reconstruct as absolute links, filter-out links to non-existent files:
+   // Extract local links from MD file, reconstruct as absolute links, filter-out links to non-existent files
 
    public async parseFileForLinks(
       file: string

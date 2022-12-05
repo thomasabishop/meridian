@@ -2,7 +2,7 @@
    "name": "meridian",
    "displayName": "Meridian",
    "description": "Parse, display and organise metadata in large Markdown knowledge bases from within VSCode",
-   "version": "0.0.1",
+   "version": "0.0.2",
    "repository": {
       "type": "git",
       "url": "https://github.com/thomasabishop/meridian"
@@ -68,6 +68,11 @@
       },
       "commands": [
          {
+            "command": "cats.reindex",
+            "title": "Manually reindex categories",
+            "icon": "$(refresh)"
+         },
+         {
             "command": "cats.scope",
             "title": "Show categories for current document only",
             "icon": "$(filter)"
@@ -76,6 +81,11 @@
             "command": "cats.resetScope",
             "title": "Show categories for entire project",
             "icon": "$(filter-filled)"
+         },
+         {
+            "command": "tags.reindex",
+            "title": "Manually reindex tags",
+            "icon": "$(refresh)"
          },
          {
             "command": "tags.scope",
@@ -90,6 +100,16 @@
       ],
       "menus": {
          "view/title": [
+            {
+               "command": "cats.reindex",
+               "when": "view == categories",
+               "group": "navigation"
+            },
+            {
+               "command": "tags.reindex",
+               "when": "view == tags",
+               "group": "navigation"
+            },
             {
                "command": "cats.scope",
                "when": "view == categories && !meridian:scopeCats",

@@ -15,6 +15,7 @@ export async function activate(context: vscode.ExtensionContext) {
          const activeEditor = vscode.window.activeTextEditor?.document.fileName
          const fileSystemUtils = new FileSystemUtils(workspaceRoot)
          const workspaceContextutils = new WorkspaceContextUtils(context)
+
          /**
           * Register views
           */
@@ -76,6 +77,9 @@ export async function activate(context: vscode.ExtensionContext) {
                }
             })
 
+         // Force full reindex of workspace map if file is renamed or moved to different sub-directory
+         // TODO: Tech debt: not happy about the inefficiency of this but unable to reindex single file and  have cat and tag tree views update in response.
+
          const updateMeridianMapOnFileRename =
             vscode.workspace.onDidRenameFiles(async (event) => {
                const isMarkdownRename = event?.files.some((uri) =>
@@ -83,19 +87,10 @@ export async function activate(context: vscode.ExtensionContext) {
                )
 
                if (isMarkdownRename) {
-                  const { oldUri, newUri } = event?.files[0]
-
-                  await workspaceContextutils.updateWorkspaceMapEntryProp(
-                     "title",
-                     oldUri.path,
-                     fileSystemUtils.parseFileTitle(newUri.path)
-                  )
-
-                  await workspaceContextutils.updateWorkspaceMapEntryProp(
-                     "fullPath",
-                     oldUri.path,
-                     newUri.path
-                  )
+                  workspaceUtils.createMeridianMap().then(() => {
+                     categoriesView.refreshIndex()
+                     tagsView.refreshIndex()
+                  })
                }
             })
 
@@ -116,6 +111,18 @@ export async function activate(context: vscode.ExtensionContext) {
          /**
           * Commands
           */
+
+         // Manually reindex categories
+         const reindexCatsCommand: vscode.Disposable =
+            vscode.commands.registerCommand("cats.reindex", () => {
+               return categoriesView.refreshIndex()
+            })
+
+         // Manually reindex tags
+         const reindexTagsCommand: vscode.Disposable =
+            vscode.commands.registerCommand("cats.reindex", () => {
+               return tagsView.refreshIndex()
+            })
 
          // Show categories for the current editor only:
          const scopeCatsCommand: vscode.Disposable =
@@ -172,7 +179,9 @@ export async function activate(context: vscode.ExtensionContext) {
             scopeCatsCommand,
             scopeCatsResetCommand,
             scopeTagsCommand,
-            scopeTagsResetCommand
+            scopeTagsResetCommand,
+            reindexCatsCommand,
+            reindexTagsCommand
          )
       })
 
@@ -184,6 +193,6 @@ export async function activate(context: vscode.ExtensionContext) {
 // this method is called when your extension is deactivated
 export async function deactivate(context: vscode.ExtensionContext) {
    // Delete workspace data on deactivation
-   // const workspaceContextUtils = new WorkspaceContextUtils(context)
-   // await workspaceContextUtils.clearWorkspaceContextItem("MERIDIAN")
+   //const workspaceContextUtils = new WorkspaceContextUtils(context)
+   //await workspaceContextUtils.clearWorkspaceContextItem("MERIDIAN")
 }

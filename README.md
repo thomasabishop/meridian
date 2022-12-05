@@ -57,9 +57,5 @@ Directories that you do not want to be indexed. Note `.git/` is automatically ig
 
 ## Known Issues
 
+Please see [issues](https://github.com/thomasabishop/meridian/issues)
 
-## Release Notes
-
-### 0.0.0
-
-Initial release.

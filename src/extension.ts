@@ -112,6 +112,18 @@ export async function activate(context: vscode.ExtensionContext) {
           * Commands
           */
 
+         // Manually reindex categories
+         const reindexCatsCommand: vscode.Disposable =
+            vscode.commands.registerCommand("cats.reindex", () => {
+               return categoriesView.refreshIndex()
+            })
+
+         // Manually reindex tags
+         const reindexTagsCommand: vscode.Disposable =
+            vscode.commands.registerCommand("cats.reindex", () => {
+               return tagsView.refreshIndex()
+            })
+
          // Show categories for the current editor only:
          const scopeCatsCommand: vscode.Disposable =
             vscode.commands.registerCommand("cats.scope", () => {
@@ -167,7 +179,9 @@ export async function activate(context: vscode.ExtensionContext) {
             scopeCatsCommand,
             scopeCatsResetCommand,
             scopeTagsCommand,
-            scopeTagsResetCommand
+            scopeTagsResetCommand,
+            reindexCatsCommand,
+            reindexTagsCommand
          )
       })
 

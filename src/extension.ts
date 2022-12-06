@@ -120,7 +120,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
          // Manually reindex tags
          const reindexTagsCommand: vscode.Disposable =
-            vscode.commands.registerCommand("cats.reindex", () => {
+            vscode.commands.registerCommand("tags.reindex", () => {
                return tagsView.refreshIndex()
             })
 

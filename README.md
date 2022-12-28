@@ -2,7 +2,7 @@
 
 Meridian provides several VSCode [Tree Views](https://code.visualstudio.com/api/extension-guides/tree-view) designed to improve the experience of working with large Markdown knowledge bases. The long term aim is to bring functionality familiar from tools like [Obsidian](https://obsidian.md/) to VSCode. 
 
-> This extension is currently under active development and may contain bugs. For this reason and also because it is primarily designed for personal use, it is not currently available via the Extension store but [releases]() can be [manually installed](https://code.visualstudio.com/docs/editor/extension-marketplace#_install-from-a-vsix) via the VSIX file.
+> This extension is currently under active development and buggy. For this reason and also because it is primarily designed for personal use, it is not currently available via the Extension store but [releases]() can be [manually installed](https://code.visualstudio.com/docs/editor/extension-marketplace#_install-from-a-vsix) via the VSIX file.
 
 ## Features
 

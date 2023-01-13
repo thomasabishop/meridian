@@ -5,11 +5,15 @@ import { IndexInlinksProvider } from "./views/treeviews/hyperlinks-index/IndexIn
 import { IndexOutlinksProvider } from "./views/treeviews/hyperlinks-index/IndexOutlinksProvider"
 import { WorkspaceUtils } from "./utils/WorkspaceUtils"
 import { IndexMetadataProvider } from "./views/treeviews/metadata-index/IndexMetadataProvider"
+
+console.log("got this far")
 export async function activate(context: vscode.ExtensionContext) {
+   console.log(context.workspaceState)
    const workspaceUtils = new WorkspaceUtils(context)
    await workspaceUtils
       .createMeridianMap()
       .then(async () => {
+         console.log("got further")
          const workspaceFiles = await workspaceUtils.workspaceFiles
          const workspaceRoot = workspaceUtils.workspaceRoot
          const activeEditor = vscode.window.activeTextEditor?.document.fileName
@@ -188,11 +192,4 @@ export async function activate(context: vscode.ExtensionContext) {
       .catch((err) => {
          console.error(err)
       })
-}
-
-// this method is called when your extension is deactivated
-export async function deactivate(context: vscode.ExtensionContext) {
-   // Delete workspace data on deactivation
-   //const workspaceContextUtils = new WorkspaceContextUtils(context)
-   //await workspaceContextUtils.clearWorkspaceContextItem("MERIDIAN")
 }

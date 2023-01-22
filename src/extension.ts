@@ -57,15 +57,19 @@ export async function activate(context: vscode.ExtensionContext) {
           */
 
          const onChangeEditorActions =
-            vscode.window.onDidChangeActiveTextEditor((event) => {
-               // Refresh inlinks:
-               inlinksView.refresh(event?.document.fileName)
-               // Refresh outlinks:
-               outlinksView.refresh(event?.document.fileName)
-               // Log event
-               printChannelOutput(
-                  `Editor changed: refreshed inlinks/outlinks for file ${event?.document.fileName}`
-               )
+            vscode.window.onDidChangeActiveTextEditor(async (event) => {
+               if (event?.document.fileName !== undefined) {
+                  if (fileSystemUtils.fileIsMd(event?.document.fileName)) {
+                     // Refresh inlinks:
+                     inlinksView.refresh(event?.document.fileName)
+                     // Refresh outlinks:
+                     outlinksView.refresh(event?.document.fileName)
+                     // Log event
+                     printChannelOutput(
+                        `Editor changed: refreshed inlinks/outlinks for file ${event?.document.fileName}`
+                     )
+                  }
+               }
             })
 
          const updateWorkspaceMapOnFileSave =

@@ -4,7 +4,7 @@
    "description": "Parse, display and organise metadata in large Markdown knowledge bases from within VSCode",
    "icon": "media/meridian-extension-logo.png",
    "publisher": "thomasabishop",
-   "version": "0.0.2",
+   "version": "0.0.3",
    "repository": {
       "type": "git",
       "url": "https://github.com/thomasabishop/meridian"

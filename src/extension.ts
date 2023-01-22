@@ -5,6 +5,7 @@ import { IndexInlinksProvider } from "./views/treeviews/hyperlinks-index/IndexIn
 import { IndexOutlinksProvider } from "./views/treeviews/hyperlinks-index/IndexOutlinksProvider"
 import { WorkspaceUtils } from "./utils/WorkspaceUtils"
 import { IndexMetadataProvider } from "./views/treeviews/metadata-index/IndexMetadataProvider"
+import { printChannelOutput } from "./utils/logger"
 
 export async function activate(context: vscode.ExtensionContext) {
    const workspaceUtils = new WorkspaceUtils(context)
@@ -59,9 +60,12 @@ export async function activate(context: vscode.ExtensionContext) {
             vscode.window.onDidChangeActiveTextEditor((event) => {
                // Refresh inlinks:
                inlinksView.refresh(event?.document.fileName)
-
                // Refresh outlinks:
                outlinksView.refresh(event?.document.fileName)
+               // Log event
+               printChannelOutput(
+                  `Editor changed: refreshed inlinks/outlinks for file ${event?.document.fileName}`
+               )
             })
 
          const updateWorkspaceMapOnFileSave =
@@ -75,6 +79,15 @@ export async function activate(context: vscode.ExtensionContext) {
                         outlinksView.refresh(event.fileName)
                         inlinksView.refresh(event.fileName)
                      })
+                     .catch((err) => {
+                        printChannelOutput(err, true, "error")
+                     })
+                     .finally(() => {
+                        printChannelOutput(
+                           `File ${event.fileName} saved: refreshed metadata`,
+                           false
+                        )
+                     })
                }
             })
 
@@ -83,15 +96,27 @@ export async function activate(context: vscode.ExtensionContext) {
 
          const updateMeridianMapOnFileRename =
             vscode.workspace.onDidRenameFiles(async (event) => {
-               const isMarkdownRename = event?.files.some((uri) =>
+               console.log(event.files)
+               const changedFile = event?.files
+               const isMarkdownRename = changedFile.some((uri) =>
                   fileSystemUtils.fileIsMd(uri?.newUri.toString())
                )
 
                if (isMarkdownRename) {
-                  workspaceUtils.createMeridianMap().then(() => {
-                     categoriesView.refreshIndex()
-                     tagsView.refreshIndex()
-                  })
+                  workspaceUtils
+                     .createMeridianMap()
+                     .then(() => {
+                        categoriesView.refreshIndex()
+                        tagsView.refreshIndex()
+                     })
+                     .catch((err) => {
+                        printChannelOutput(`${err}`, true, "error")
+                     })
+                     .finally(() => {
+                        printChannelOutput(
+                           `File ${changedFile[0].oldUri.path} renamed to ${changedFile[0].newUri.path}. Metadata updated.`
+                        )
+                     })
                }
             })
 
@@ -102,10 +127,22 @@ export async function activate(context: vscode.ExtensionContext) {
                      event.files.map(async (file) => {
                         workspaceContextutils.deleteWorkspaceMapEntry(file.path)
                      })
-                  ).then(() => {
-                     categoriesView.refreshIndex()
-                     tagsView.refreshIndex()
-                  })
+                  )
+                     .then(() => {
+                        categoriesView.refreshIndex()
+                        tagsView.refreshIndex()
+                     })
+                     .catch((err) => {
+                        printChannelOutput(`${err}`, true, "error")
+                     })
+                     .finally(() => {
+                        const deletedFiles = event.files.map(
+                           (file) => file.path
+                        )
+                        printChannelOutput(
+                           `Deleted files: ${deletedFiles}. Metadata updated.`
+                        )
+                     })
                }
             })
 
@@ -116,18 +153,21 @@ export async function activate(context: vscode.ExtensionContext) {
          // Manually reindex categories
          const reindexCatsCommand: vscode.Disposable =
             vscode.commands.registerCommand("cats.reindex", () => {
+               printChannelOutput("Categories manually reindexed", false)
                return categoriesView.refreshIndex()
             })
 
          // Manually reindex tags
          const reindexTagsCommand: vscode.Disposable =
             vscode.commands.registerCommand("tags.reindex", () => {
+               printChannelOutput("Tags manually reindexed", false)
                return tagsView.refreshIndex()
             })
 
          // Show categories for the current editor only:
          const scopeCatsCommand: vscode.Disposable =
             vscode.commands.registerCommand("cats.scope", () => {
+               printChannelOutput("Category filter applied", false)
                categoriesView.filterMetadataIndexForCurrentFile(
                   "categories",
                   vscode.window.activeTextEditor?.document.fileName
@@ -151,6 +191,7 @@ export async function activate(context: vscode.ExtensionContext) {
          // Show tags for the current editor only:
          const scopeTagsCommand: vscode.Disposable =
             vscode.commands.registerCommand("tags.scope", () => {
+               printChannelOutput("Tag filter applied", false)
                tagsView.filterMetadataIndexForCurrentFile(
                   "tags",
                   vscode.window.activeTextEditor?.document.fileName

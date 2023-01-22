@@ -7,6 +7,7 @@ import { FileSystemUtils } from "./FileSystemUtils"
 import { IndexHyperlinks } from "../views/treeviews/hyperlinks-index/IndexHyperlinks"
 import { IndexMetadata } from "../views/treeviews/metadata-index/IndexMetadata"
 import IWorkspaceMap from "../types/IWorkspaceMap"
+import { printChannelOutput } from "./logger"
 export class WorkspaceUtils {
    private _workspaceRoot: string | undefined
    private dirsToIgnore: string[] | undefined
@@ -15,7 +16,6 @@ export class WorkspaceUtils {
    private fileSystemUtils: FileSystemUtils
    private indexMetadata: IndexMetadata
    private customTypeGuard: CustomTypeGuards = new CustomTypeGuards()
-
    constructor(context: vscode.ExtensionContext) {
       this.context = context
       this._workspaceRoot = this.determineWorkspaceRoot()
@@ -53,29 +53,38 @@ export class WorkspaceUtils {
       file: string
    ): Promise<Map<string, IWorkspaceMap> | undefined> {
       const allFiles = await this.collateWorkspaceFiles()
-      if (this.customTypeGuard.isStringArray(allFiles)) {
-         const indexHyperlinks: IndexHyperlinks = new IndexHyperlinks(
-            this.context,
-            allFiles
-         )
+      try {
+         if (this.customTypeGuard.isStringArray(allFiles)) {
+            const indexHyperlinks: IndexHyperlinks = new IndexHyperlinks(
+               this.context,
+               allFiles
+            )
 
-         const outlinks = await indexHyperlinks.parseFileForLinks(file)
-         const workspaceEntry: IWorkspaceMap = {
-            fullPath: file,
-            title: this.fileSystemUtils.parseFileTitle(file),
-            categories: await this.indexMetadata.extractMetadataForFile(
+            const outlinks = await indexHyperlinks.parseFileForLinks(file)
+            const workspaceEntry: IWorkspaceMap = {
+               fullPath: file,
+               title: this.fileSystemUtils.parseFileTitle(file),
+               categories: await this.indexMetadata.extractMetadataForFile(
+                  file,
+                  "categories"
+               ),
+               tags: await this.indexMetadata.extractMetadataForFile(
+                  file,
+                  "tags"
+               ),
+               outlinks: [...new Set(outlinks)],
+               inlinks: await indexHyperlinks.indexInlinks(file),
+            }
+
+            return await this.workspaceContextUtils.updateWorkspaceMapEntry(
                file,
-               "categories"
-            ),
-            tags: await this.indexMetadata.extractMetadataForFile(file, "tags"),
-            outlinks: [...new Set(outlinks)],
-            inlinks: await indexHyperlinks.indexInlinks(file),
+               workspaceEntry
+            )
          }
-
-         return await this.workspaceContextUtils.updateWorkspaceMapEntry(
-            file,
-            workspaceEntry
-         )
+      } catch (err) {
+         printChannelOutput(`${err}`, true, "error")
+      } finally {
+         printChannelOutput(`Added ${file} to Meridian index`)
       }
    }
 
@@ -90,30 +99,35 @@ export class WorkspaceUtils {
 
    private async indexWorkspace(): Promise<IWorkspaceMap[] | undefined> {
       const allFiles = await this.workspaceFiles
-
-      if (this.customTypeGuard.isStringArray(allFiles)) {
-         const indexHyperlinks: IndexHyperlinks = new IndexHyperlinks(
-            this.context,
-            allFiles
-         )
-         let workspace: IWorkspaceMap[] = []
-         for (const file of allFiles) {
-            let outlinks = await indexHyperlinks.parseFileForLinks(file)
-            workspace.push({
-               fullPath: file,
-               title: this.fileSystemUtils.parseFileTitle(file),
-               categories: await this.indexMetadata.extractMetadataForFile(
-                  file,
-                  "categories"
-               ),
-               tags: await this.indexMetadata.extractMetadataForFile(
-                  file,
-                  "tags"
-               ),
-               outlinks: [...new Set(outlinks)],
-            })
+      try {
+         if (this.customTypeGuard.isStringArray(allFiles)) {
+            const indexHyperlinks: IndexHyperlinks = new IndexHyperlinks(
+               this.context,
+               allFiles
+            )
+            let workspace: IWorkspaceMap[] = []
+            for (const file of allFiles) {
+               let outlinks = await indexHyperlinks.parseFileForLinks(file)
+               workspace.push({
+                  fullPath: file,
+                  title: this.fileSystemUtils.parseFileTitle(file),
+                  categories: await this.indexMetadata.extractMetadataForFile(
+                     file,
+                     "categories"
+                  ),
+                  tags: await this.indexMetadata.extractMetadataForFile(
+                     file,
+                     "tags"
+                  ),
+                  outlinks: [...new Set(outlinks)],
+               })
+            }
+            return workspace
          }
-         return workspace
+      } catch (err) {
+         printChannelOutput(`${err}`, true, "error")
+      } finally {
+         printChannelOutput(`${allFiles.length} files indexed`, false)
       }
    }
 
@@ -127,12 +141,16 @@ export class WorkspaceUtils {
 
    private retrieveDirsToIgnore(inp: string) {
       const ignoreDirs = vscode.workspace
-         .getConfiguration()
-         .get("meridian.ignoreDirs") as string[]
+         .getConfiguration("meridian")
+         .get("dirsToIgnore") as string[]
       if (!ignoreDirs?.length) {
          return
       }
       if (ignoreDirs !== undefined) {
+         printChannelOutput(
+            `Meridian is ignoring the directories: ${ignoreDirs}`,
+            false
+         )
          return [inp, ...ignoreDirs]
       }
    }

@@ -2,6 +2,8 @@
    "name": "meridian",
    "displayName": "Meridian",
    "description": "Parse, display and organise metadata in large Markdown knowledge bases from within VSCode",
+   "icon": "media/meridian-extension-logo.png",
+   "publisher": "thomasabishop",
    "version": "0.0.2",
    "repository": {
       "type": "git",
@@ -15,7 +17,7 @@
       "Other"
    ],
    "activationEvents": [
-      "onLanguage:markdown"
+      "workspaceContains: **/.md"
    ],
    "main": "./dist/extension.js",
    "contributes": {
@@ -42,7 +44,7 @@
             {
                "id": "meridian",
                "title": "Meridian",
-               "icon": "media/logo-slanted.svg"
+               "icon": "media/meridian-icon-logo.svg"
             }
          ]
       },

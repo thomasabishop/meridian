@@ -59,7 +59,7 @@ export class WorkspaceUtils {
             allFiles
          )
 
-         //   const outlinks = await indexHyperlinks.parseFileForLinks(file)
+         const outlinks = await indexHyperlinks.parseFileForLinks(file)
          const workspaceEntry: IWorkspaceMap = {
             fullPath: file,
             title: this.fileSystemUtils.parseFileTitle(file),
@@ -68,7 +68,7 @@ export class WorkspaceUtils {
                "categories"
             ),
             tags: await this.indexMetadata.extractMetadataForFile(file, "tags"),
-            //     outlinks: [...new Set(outlinks)],
+            outlinks: [...new Set(outlinks)],
             inlinks: await indexHyperlinks.indexInlinks(file),
          }
 
@@ -98,7 +98,7 @@ export class WorkspaceUtils {
          )
          let workspace: IWorkspaceMap[] = []
          for (const file of allFiles) {
-            //    let outlinks = await indexHyperlinks.parseFileForLinks(file)
+            let outlinks = await indexHyperlinks.parseFileForLinks(file)
             workspace.push({
                fullPath: file,
                title: this.fileSystemUtils.parseFileTitle(file),
@@ -110,7 +110,7 @@ export class WorkspaceUtils {
                   file,
                   "tags"
                ),
-               //      outlinks: [...new Set(outlinks)],
+               outlinks: [...new Set(outlinks)],
             })
          }
          return workspace
@@ -126,11 +126,9 @@ export class WorkspaceUtils {
    }
 
    private retrieveDirsToIgnore(inp: string) {
-      console.log("got here")
       const ignoreDirs = vscode.workspace
          .getConfiguration("meridian")
          .get("dirsToIgnore") as string[]
-      console.log(ignoreDirs)
       if (!ignoreDirs?.length) {
          return
       }

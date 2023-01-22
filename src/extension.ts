@@ -6,14 +6,11 @@ import { IndexOutlinksProvider } from "./views/treeviews/hyperlinks-index/IndexO
 import { WorkspaceUtils } from "./utils/WorkspaceUtils"
 import { IndexMetadataProvider } from "./views/treeviews/metadata-index/IndexMetadataProvider"
 
-console.log("got this far")
 export async function activate(context: vscode.ExtensionContext) {
-   console.log(context.workspaceState)
    const workspaceUtils = new WorkspaceUtils(context)
    await workspaceUtils
       .createMeridianMap()
       .then(async () => {
-         console.log("got further")
          const workspaceFiles = await workspaceUtils.workspaceFiles
          const workspaceRoot = workspaceUtils.workspaceRoot
          const activeEditor = vscode.window.activeTextEditor?.document.fileName

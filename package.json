@@ -163,8 +163,10 @@
       "@types/lodash": "^4.14.184",
       "@types/recursive-readdir": "^2.2.1",
       "@types/yaml-front-matter": "^4.1.0",
+      "eslint-config-prettier": "^8.6.0",
       "lodash": "^4.17.21",
       "markdown-link-extractor": "^4.0.1",
+      "prettier": "^2.8.3",
       "recursive-readdir": "^2.2.2",
       "yaml-front-matter": "^4.1.1"
    }

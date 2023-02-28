@@ -7,9 +7,9 @@ import IWorkspaceMap from "../../../types/IWorkspaceMap"
 import { WorkspaceContextUtils } from "./../../../utils/WorkspaceContextUtils"
 
 export class IndexHyperlinks {
-   private workspaceContextUtils: WorkspaceContextUtils
    public workspaceFiles: string[]
-
+   private workspaceContextUtils: WorkspaceContextUtils
+   private fileSystemUtils = new FileSystemUtils()
    constructor(context: vscode.ExtensionContext, workspaceFiles: string[]) {
       this.workspaceContextUtils = new WorkspaceContextUtils(context)
       this.workspaceFiles = workspaceFiles
@@ -62,18 +62,15 @@ export class IndexHyperlinks {
    }
 
    public generateInlinks(workspaceMap: IWorkspaceMap[]): IWorkspaceMap[] {
-      const fileSystemUtils = new FileSystemUtils()
       for (const entry of workspaceMap) {
          if (entry.outlinks) {
             for (const outlink of entry.outlinks) {
                if (outlink !== undefined) {
-                  console.log(fileSystemUtils.stripAnchorFromLink(outlink))
                   let matchedEntry = workspaceMap.find(
                      (x) =>
                         x.fullPath ===
-                        fileSystemUtils.stripAnchorFromLink(outlink)
+                        this.fileSystemUtils.stripAnchorFromLink(outlink)
                   )
-                  // console.log(matchedEntry)
                   if (matchedEntry !== undefined) {
                      matchedEntry.inlinks?.push(entry.fullPath)
                   }
@@ -87,14 +84,14 @@ export class IndexHyperlinks {
    // Check link is well-formed and corresponds to document in workspace
    private sanitiseLink(link: string): string | void {
       let output
-      const baselink = this.stripToBaseLink(link)
+      const baselink = this.fileSystemUtils.stripAnchorFromLink(link)
       const baseLinkExistsInWorkspace = this.workspaceFiles?.filter((file) =>
          file.includes(baselink)
       )
 
       if (baseLinkExistsInWorkspace.length) {
          output = baseLinkExistsInWorkspace[0]
-         if (this.linkContainsFragment(link)) {
+         if (link.includes("#")) {
             output =
                baseLinkExistsInWorkspace[0] + "#" + link.match(/#(.*)/)![1]
          }
@@ -103,18 +100,6 @@ export class IndexHyperlinks {
       }
 
       return output
-   }
-
-   // Remove relative path tokens (eg. `../`, `././` etc) and anchor fragments:
-   private stripToBaseLink(link: string): string {
-      return this.linkContainsFragment(link) ? link.split("#")[0] : link
-   }
-
-   // Identify whether link contains anchor fragment:
-   // e.g /files/doc.md#section-one
-
-   private linkContainsFragment(link: string): boolean {
-      return link.includes("#")
    }
 }
 export default IndexHyperlinks

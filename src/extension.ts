@@ -15,7 +15,7 @@ export async function activate(context: vscode.ExtensionContext) {
          const workspaceFiles = await workspaceUtils.workspaceFiles
          const workspaceRoot = workspaceUtils.workspaceRoot
          const activeEditor = vscode.window.activeTextEditor?.document.fileName
-         const fileSystemUtils = new FileSystemUtils(workspaceRoot)
+         const fileSystemUtils = new FileSystemUtils()
          const workspaceContextutils = new WorkspaceContextUtils(context)
 
          /**
@@ -100,7 +100,6 @@ export async function activate(context: vscode.ExtensionContext) {
 
          const updateMeridianMapOnFileRename =
             vscode.workspace.onDidRenameFiles(async (event) => {
-               console.log(event.files)
                const changedFile = event?.files
                const isMarkdownRename = changedFile.some((uri) =>
                   fileSystemUtils.fileIsMd(uri?.newUri.toString())

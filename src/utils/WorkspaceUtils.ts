@@ -21,7 +21,7 @@ export class WorkspaceUtils {
       this._workspaceRoot = this.determineWorkspaceRoot()
       this.dirsToIgnore = this.retrieveDirsToIgnore(".git")
       this.workspaceContextUtils = new WorkspaceContextUtils(context)
-      this.fileSystemUtils = new FileSystemUtils(this._workspaceRoot)
+      this.fileSystemUtils = new FileSystemUtils()
       this.indexMetadata = new IndexMetadata(context)
    }
 
@@ -120,9 +120,14 @@ export class WorkspaceUtils {
                      "tags"
                   ),
                   outlinks: [...new Set(outlinks)],
+                  inlinks: [],
                })
             }
-            return workspace
+            let workspacePlusInlinks =
+               indexHyperlinks.generateInlinks(workspace)
+            console.log(workspacePlusInlinks)
+
+            return workspacePlusInlinks
          }
       } catch (err) {
          printChannelOutput(`${err}`, true, "error")

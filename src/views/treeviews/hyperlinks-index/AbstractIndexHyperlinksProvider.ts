@@ -11,7 +11,7 @@ export abstract class AbstractIndexHyperlinksProvider
    public _activeFile: string | undefined
    private hyperlinks: Promise<TreeItem[] | undefined>
    private fileSystemUtils: FileSystemUtils
-
+   private workspaceRoot: string | undefined
    private _onDidChangeTreeData: vscode.EventEmitter<undefined | null | void> =
       new vscode.EventEmitter<undefined | null | void>()
    readonly onDidChangeTreeData: vscode.Event<undefined | null | void> =
@@ -22,7 +22,8 @@ export abstract class AbstractIndexHyperlinksProvider
       workspaceRoot: string | undefined
    ) {
       this._activeFile = activeFile
-      this.fileSystemUtils = new FileSystemUtils(workspaceRoot)
+      this.workspaceRoot = workspaceRoot
+      this.fileSystemUtils = new FileSystemUtils()
    }
 
    public get activeFile() {
@@ -44,15 +45,18 @@ export abstract class AbstractIndexHyperlinksProvider
    public transformLinksToTreeItem(links: string[]): TreeItem[] {
       links = links.filter((link) => link !== undefined)
       let transformed: TreeItem[] = []
-     for (const link of links) {
+      for (const link of links) {
          const treeItem = new TreeItem(this.renderPrettyLink(link), {
             command: "vscode.open",
             title: "",
             arguments: [link],
          })
-         treeItem.tooltip = this.fileSystemUtils.removeRootPath(link)
-      transformed.push(treeItem)
-     } 
+         treeItem.tooltip = this.fileSystemUtils.removeRootPath(
+            link,
+            this.workspaceRoot
+         )
+         transformed.push(treeItem)
+      }
       return transformed
    }
 

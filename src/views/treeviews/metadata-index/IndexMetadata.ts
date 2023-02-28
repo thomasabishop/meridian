@@ -22,32 +22,33 @@ export class IndexMetadata {
          await this.workspaceContextUtils.readFromWorkspaceContext("MERIDIAN")
       let metadataIndex: IMetadataIndex[] = []
 
-      meridianMap?.forEach((value, key) => {
-         let type =
-            metadataType === "categories" ? value.categories : value.tags
-         if (type !== undefined) {
-            for (const instance of type) {
-               if (!metadataIndex.some((x) => x.token === instance)) {
-                  metadataIndex.push({
-                     token: instance,
-                     files: [
-                        {
+      meridianMap &&
+         meridianMap?.forEach((value, key) => {
+            let type =
+               metadataType === "categories" ? value.categories : value.tags
+            if (type !== undefined) {
+               for (const instance of type) {
+                  if (!metadataIndex.some((x) => x.token === instance)) {
+                     metadataIndex.push({
+                        token: instance,
+                        files: [
+                           {
+                              filePath: key,
+                              fileTitle: value?.title,
+                           },
+                        ],
+                     })
+                  } else {
+                     metadataIndex
+                        .filter((y) => y.token === instance)[0]
+                        .files.push({
                            filePath: key,
                            fileTitle: value?.title,
-                        },
-                     ],
-                  })
-               } else {
-                  metadataIndex
-                     .filter((y) => y.token === instance)[0]
-                     .files.push({
-                        filePath: key,
-                        fileTitle: value?.title,
-                     })
+                        })
+                  }
                }
             }
-         }
-      })
+         })
       return metadataIndex
    }
 

@@ -1,3 +1,4 @@
+import { FileSystemUtils } from "./../../../utils/FileSystemUtils"
 import * as markdownLinkExtractor from "markdown-link-extractor"
 import * as fs from "fs"
 import * as vscode from "vscode"
@@ -58,6 +59,29 @@ export class IndexHyperlinks {
             .filter((link: string) => /\.(md)+$|\.(md)#/.test(link))
             .map((link: string) => this.sanitiseLink(link))
       )
+   }
+
+   public generateInlinks(workspaceMap: IWorkspaceMap[]): IWorkspaceMap[] {
+      const fileSystemUtils = new FileSystemUtils()
+      for (const entry of workspaceMap) {
+         if (entry.outlinks) {
+            for (const outlink of entry.outlinks) {
+               if (outlink !== undefined) {
+                  console.log(fileSystemUtils.stripAnchorFromLink(outlink))
+                  let matchedEntry = workspaceMap.find(
+                     (x) =>
+                        x.fullPath ===
+                        fileSystemUtils.stripAnchorFromLink(outlink)
+                  )
+                  // console.log(matchedEntry)
+                  if (matchedEntry !== undefined) {
+                     matchedEntry.inlinks?.push(entry.fullPath)
+                  }
+               }
+            }
+         }
+      }
+      return workspaceMap
    }
 
    // Check link is well-formed and corresponds to document in workspace

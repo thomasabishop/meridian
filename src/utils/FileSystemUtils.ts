@@ -18,12 +18,7 @@ export class FileSystemUtils {
       }
    }
 
-   public stripAnchorFromLink(link: string): string | void {
-      if (link.includes("#")) {
-         return link.split("#")[0]
-      } else {
-         return link
-      }
-      return
+   public stripAnchorFromLink(link: string): string {
+      return link.includes("#") ? link.split("#")[0] : link
    }
 }

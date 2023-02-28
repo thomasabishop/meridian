@@ -1,6 +1,5 @@
 import * as vscode from "vscode"
 
-//@ts-expect-error
 let outputChannel: any = vscode.window.createOutputChannel("Meridian", {
    log: true,
 })
@@ -15,6 +14,6 @@ export function printChannelOutput(
       outputChannel.error(content)
    } else {
       reveal && outputChannel.show(true)
-      outputChannel.appendLine(content)
+      outputChannel
    }
 }

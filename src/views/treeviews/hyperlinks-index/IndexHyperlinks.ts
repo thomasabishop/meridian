@@ -1,3 +1,4 @@
+import { CustomTypeGuards } from "./../../../types/CustomTypeGuards"
 import { FileSystemUtils } from "./../../../utils/FileSystemUtils"
 import * as markdownLinkExtractor from "markdown-link-extractor"
 import * as fs from "fs"
@@ -10,42 +11,72 @@ export class IndexHyperlinks {
    public workspaceFiles: string[]
    private workspaceContextUtils: WorkspaceContextUtils
    private fileSystemUtils = new FileSystemUtils()
+   private customTypeGuards = new CustomTypeGuards()
    constructor(context: vscode.ExtensionContext, workspaceFiles: string[]) {
       this.workspaceContextUtils = new WorkspaceContextUtils(context)
       this.workspaceFiles = workspaceFiles
    }
 
    // Retrieve outlinks for a single file, from the existing workspace map
-   public async indexOutlinks(
-      activeFile: string
-   ): Promise<IWorkspaceMap["outlinks"] | undefined> {
+
+   public async retrieveLinks(
+      activeFile: string,
+      linkType: LinkTypes
+   ): Promise<
+      IWorkspaceMap["outlinks"] | IWorkspaceMap["inlinks"] | undefined
+   > {
       if (activeFile !== undefined) {
-         let meridianMap =
-            await this.workspaceContextUtils.readFromWorkspaceContext(
-               "MERIDIAN"
+         const links =
+            await this.workspaceContextUtils.retrieveWorkspaceMapEntryProp(
+               linkType,
+               activeFile
             )
-         return meridianMap?.get(activeFile)?.outlinks ?? undefined
+         if (
+            links !== undefined &&
+            typeof links !== "string" &&
+            this.customTypeGuards.isStringArray(links)
+         ) {
+            return links
+         }
       }
    }
 
-   public async indexInlinks(
-      activeFile: string
-   ): Promise<string[] | undefined> {
-      if (activeFile !== undefined) {
-         let inlinks: string[] = []
-         let meridianMap =
-            await this.workspaceContextUtils.readFromWorkspaceContext(
-               "MERIDIAN"
-            )
+   // public async indexOutlinks(
+   //    activeFile: string
+   // ): Promise<IWorkspaceMap["outlinks"] | undefined> {
+   //    if (activeFile !== undefined) {
+   //       const outlinks =
+   //          await this.workspaceContextUtils.retrieveWorkspaceMapEntryProp(
+   //             "outlinks",
+   //             activeFile
+   //          )
+   //       if (
+   //          outlinks !== undefined &&
+   //          this.customTypeGuards.isStringArray(outlinks)
+   //       ) {
+   //          return outlinks
+   //       }
+   //    }
+   // }
 
-         meridianMap?.forEach((value, key) => {
-            if (value.outlinks?.includes(activeFile) && inlinks !== undefined) {
-               inlinks.push(key)
-            }
-         })
-         return inlinks
-      }
-   }
+   // public async indexInlinks(
+   //    activeFile: string
+   // ): Promise<string[] | undefined> {
+   //    if (activeFile !== undefined) {
+   //       const inlinks =
+   //          await this.workspaceContextUtils.retrieveWorkspaceMapEntryProp(
+   //             "inlinks",
+   //             activeFile
+   //          )
+
+   //       if (
+   //          inlinks !== undefined &&
+   //          this.customTypeGuards.isStringArray(inlinks)
+   //       ) {
+   //          return inlinks
+   //       }
+   //    }
+   // }
 
    // Extract local links from MD file, reconstruct as absolute links, filter-out links to non-existent files
 
@@ -103,3 +134,8 @@ export class IndexHyperlinks {
    }
 }
 export default IndexHyperlinks
+
+export enum LinkTypes {
+   Outlinks = "outlinks",
+   Inlinks = "inlinks",
+}

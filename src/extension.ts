@@ -1,12 +1,11 @@
 import * as vscode from "vscode"
 import { FileSystemUtils } from "./utils/FileSystemUtils"
 import { WorkspaceContextUtils } from "./utils/WorkspaceContextUtils"
-import { IndexInlinksProvider } from "./views/treeviews/hyperlinks-index/IndexInlinksProvider"
-import { IndexOutlinksProvider } from "./views/treeviews/hyperlinks-index/IndexOutlinksProvider"
 import { WorkspaceUtils } from "./utils/WorkspaceUtils"
 import { IndexMetadataProvider } from "./views/treeviews/metadata-index/IndexMetadataProvider"
 import { printChannelOutput } from "./utils/logger"
-
+import { IndexHyperlinksProvider } from "./views/treeviews/hyperlinks-index/IndexHyperlinksProvider"
+import { LinkTypes } from "./views/treeviews/hyperlinks-index/IndexHyperlinks"
 export async function activate(context: vscode.ExtensionContext) {
    const workspaceUtils = new WorkspaceUtils(context)
    await workspaceUtils
@@ -24,22 +23,23 @@ export async function activate(context: vscode.ExtensionContext) {
 
          // Hyperlinks
 
-         const outlinksView = new IndexOutlinksProvider(
+         const outlinksView = new IndexHyperlinksProvider(
             vscode.window.activeTextEditor?.document.fileName,
             workspaceRoot,
             workspaceFiles,
             context
          )
-         outlinksView.refresh(activeEditor)
+
+         outlinksView.refresh(activeEditor, LinkTypes.Outlinks)
          vscode.window.registerTreeDataProvider("outlinks", outlinksView)
 
-         const inlinksView = new IndexInlinksProvider(
+         const inlinksView = new IndexHyperlinksProvider(
             vscode.window.activeTextEditor?.document.fileName,
             workspaceRoot,
             workspaceFiles,
             context
          )
-         inlinksView.refresh(activeEditor)
+         inlinksView.refresh(activeEditor, LinkTypes.Inlinks)
          vscode.window.registerTreeDataProvider("inlinks", inlinksView)
 
          // Metadata indices
@@ -61,9 +61,15 @@ export async function activate(context: vscode.ExtensionContext) {
                if (event?.document.fileName !== undefined) {
                   if (fileSystemUtils.fileIsMd(event?.document.fileName)) {
                      // Refresh inlinks:
-                     inlinksView.refresh(event?.document.fileName)
+                     inlinksView.refresh(
+                        event?.document.fileName,
+                        LinkTypes.Inlinks
+                     )
                      // Refresh outlinks:
-                     outlinksView.refresh(event?.document.fileName)
+                     outlinksView.refresh(
+                        event?.document.fileName,
+                        LinkTypes.Outlinks
+                     )
                      // Log event
                      printChannelOutput(
                         `Editor changed: refreshed inlinks/outlinks for file ${event?.document.fileName}`
@@ -80,8 +86,8 @@ export async function activate(context: vscode.ExtensionContext) {
                      .then(() => {
                         categoriesView.refreshIndex()
                         tagsView.refreshIndex()
-                        outlinksView.refresh(event.fileName)
-                        inlinksView.refresh(event.fileName)
+                        outlinksView.refresh(event.fileName, LinkTypes.Outlinks)
+                        inlinksView.refresh(event.fileName, LinkTypes.Inlinks)
                      })
                      .catch((err) => {
                         printChannelOutput(err, true, "error")

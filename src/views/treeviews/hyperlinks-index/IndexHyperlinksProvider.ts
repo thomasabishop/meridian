@@ -1,14 +1,17 @@
 import { FileSystemUtils } from "../../../utils/FileSystemUtils"
 import * as vscode from "vscode"
-
+import IndexHyperlinks from "./IndexHyperlinks"
+import { LinkTypes } from "./IndexHyperlinks"
 /**
  * Create TreeProvider for hyperlink views.
  */
 
-export abstract class AbstractIndexHyperlinksProvider
+export class IndexHyperlinksProvider
    implements vscode.TreeDataProvider<TreeItem>
 {
    public _activeFile: string | undefined
+   public context: vscode.ExtensionContext
+   public workspaceFiles: string[]
    private hyperlinks: Promise<TreeItem[] | undefined>
    private fileSystemUtils: FileSystemUtils
    private workspaceRoot: string | undefined
@@ -19,11 +22,14 @@ export abstract class AbstractIndexHyperlinksProvider
 
    constructor(
       activeFile: string | undefined,
-      workspaceRoot: string | undefined
+      workspaceRoot: string | undefined,
+      workspaceFiles: string[],
+      context: vscode.ExtensionContext
    ) {
       this._activeFile = activeFile
       this.workspaceRoot = workspaceRoot
       this.fileSystemUtils = new FileSystemUtils()
+      ;(this.workspaceFiles = workspaceFiles), (this.context = context)
    }
 
    public get activeFile() {
@@ -34,12 +40,22 @@ export abstract class AbstractIndexHyperlinksProvider
       this._activeFile = activeFile
    }
 
-   abstract generateLinks(): Promise<TreeItem[] | undefined>
+   public async generateLinks(
+      linkType: LinkTypes
+   ): Promise<TreeItem[] | undefined> {
+      const indexer = new IndexHyperlinks(this.context, this.workspaceFiles)
+      if (typeof this.activeFile === "string") {
+         const links = await indexer.retrieveLinks(this.activeFile, linkType)
+         if (links !== undefined) {
+            return this.transformLinksToTreeItem(links)
+         }
+      }
+   }
 
-   public refresh(activeFile: string | undefined) {
+   public refresh(activeFile: string | undefined, linkType: LinkTypes) {
       this._onDidChangeTreeData.fire()
       this._activeFile = activeFile
-      this.hyperlinks = this.generateLinks()
+      this.hyperlinks = this.generateLinks(linkType)
    }
 
    public transformLinksToTreeItem(links: string[]): TreeItem[] {

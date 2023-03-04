@@ -125,7 +125,6 @@ export class WorkspaceUtils {
             }
             let workspacePlusInlinks =
                indexHyperlinks.generateInlinks(workspace)
-            console.log(workspacePlusInlinks)
 
             return workspacePlusInlinks
          }

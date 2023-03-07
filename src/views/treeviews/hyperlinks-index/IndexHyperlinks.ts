@@ -17,8 +17,7 @@ export class IndexHyperlinks {
       this.workspaceFiles = workspaceFiles
    }
 
-   // Retrieve outlinks for a single file, from the existing workspace map
-
+   // Retrieve outlinks/ inlinks for a given file from the workspace map
    public async retrieveLinks(
       activeFile: string,
       linkType: LinkTypes
@@ -39,6 +38,44 @@ export class IndexHyperlinks {
             return links
          }
       }
+   }
+
+   // Extract local links for a given file and attempt to sanitise (in case relative paths have been used or if the location of the linked file has subsequently changed).
+
+   // This creates the outlink array for each file, which is used as the basis for determing inlinks
+
+   public async parseFileForLinks(
+      file: string
+   ): Promise<IWorkspaceMap["outlinks"]> {
+      const fileContents = await fs.promises.readFile(file, "utf-8")
+      return (
+         markdownLinkExtractor(fileContents) // array of all links
+            // filtered to internal links
+            .filter((link: string) => /\.(md)+$|\.(md)#/.test(link))
+            .map((link: string) => this.sanitiseLink(link))
+      )
+   }
+
+   // Loop through each entry in the workspace map and construct inlink array for the entry from existing outlinks array
+
+   public generateInlinks(workspaceMap: IWorkspaceMap[]): IWorkspaceMap[] {
+      for (const entry of workspaceMap) {
+         if (entry.outlinks) {
+            for (const outlink of entry.outlinks) {
+               if (outlink !== undefined) {
+                  let matchedEntry = workspaceMap.find(
+                     (x) =>
+                        x.fullPath ===
+                        this.fileSystemUtils.stripAnchorFromLink(outlink)
+                  )
+                  if (matchedEntry !== undefined) {
+                     matchedEntry.inlinks?.push(entry.fullPath)
+                  }
+               }
+            }
+         }
+      }
+      return workspaceMap
    }
 
    // public async indexOutlinks(
@@ -77,40 +114,6 @@ export class IndexHyperlinks {
    //       }
    //    }
    // }
-
-   // Extract local links from MD file, reconstruct as absolute links, filter-out links to non-existent files
-
-   public async parseFileForLinks(
-      file: string
-   ): Promise<IWorkspaceMap["outlinks"]> {
-      const fileContents = await fs.promises.readFile(file, "utf-8")
-      return (
-         markdownLinkExtractor(fileContents) // array of all links
-            // filtered to internal links
-            .filter((link: string) => /\.(md)+$|\.(md)#/.test(link))
-            .map((link: string) => this.sanitiseLink(link))
-      )
-   }
-
-   public generateInlinks(workspaceMap: IWorkspaceMap[]): IWorkspaceMap[] {
-      for (const entry of workspaceMap) {
-         if (entry.outlinks) {
-            for (const outlink of entry.outlinks) {
-               if (outlink !== undefined) {
-                  let matchedEntry = workspaceMap.find(
-                     (x) =>
-                        x.fullPath ===
-                        this.fileSystemUtils.stripAnchorFromLink(outlink)
-                  )
-                  if (matchedEntry !== undefined) {
-                     matchedEntry.inlinks?.push(entry.fullPath)
-                  }
-               }
-            }
-         }
-      }
-      return workspaceMap
-   }
 
    // Check link is well-formed and corresponds to document in workspace
    private sanitiseLink(link: string): string | void {

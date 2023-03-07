@@ -11,7 +11,7 @@ export async function activate(context: vscode.ExtensionContext) {
    await workspaceUtils
       .createMeridianMap()
       .then(async () => {
-         const workspaceFiles = await workspaceUtils.workspaceFiles
+         const workspaceFiles = await workspaceUtils.collateWorkspaceFiles()
          const workspaceRoot = workspaceUtils.workspaceRoot
          const activeEditor = vscode.window.activeTextEditor?.document.fileName
          const fileSystemUtils = new FileSystemUtils()
@@ -58,16 +58,14 @@ export async function activate(context: vscode.ExtensionContext) {
 
          const onChangeEditorActions =
             vscode.window.onDidChangeActiveTextEditor(async (event) => {
-               if (event?.document.fileName !== undefined) {
-                  if (fileSystemUtils.fileIsMd(event?.document.fileName)) {
+               let currentlyActiveFile = event?.document.fileName
+               if (currentlyActiveFile !== undefined) {
+                  if (fileSystemUtils.fileIsMd(currentlyActiveFile)) {
                      // Refresh inlinks:
-                     inlinksView.refresh(
-                        event?.document.fileName,
-                        LinkTypes.Inlinks
-                     )
+                     inlinksView.refresh(currentlyActiveFile, LinkTypes.Inlinks)
                      // Refresh outlinks:
                      outlinksView.refresh(
-                        event?.document.fileName,
+                        currentlyActiveFile,
                         LinkTypes.Outlinks
                      )
                      // Log event
@@ -80,21 +78,24 @@ export async function activate(context: vscode.ExtensionContext) {
 
          const updateWorkspaceMapOnFileSave =
             vscode.workspace.onDidSaveTextDocument(async (event) => {
-               if (fileSystemUtils.fileIsMd(event.fileName)) {
+               const savedFile = event.fileName
+               if (fileSystemUtils.fileIsMd(savedFile)) {
                   await workspaceUtils
-                     .indexSingleFile(event.fileName)
+                     .indexSingleFile(savedFile)
                      .then(() => {
                         categoriesView.refreshIndex()
                         tagsView.refreshIndex()
-                        outlinksView.refresh(event.fileName, LinkTypes.Outlinks)
-                        inlinksView.refresh(event.fileName, LinkTypes.Inlinks)
+                        outlinksView.refresh(savedFile, LinkTypes.Outlinks)
+                        inlinksView.refresh(savedFile, LinkTypes.Inlinks)
                      })
                      .catch((err) => {
                         printChannelOutput(err, true, "error")
                      })
                      .finally(() => {
                         printChannelOutput(
-                           `File ${event.fileName} saved: refreshed metadata`,
+                           `File ${fileSystemUtils.extractFileNameFromFullPath(
+                              savedFile
+                           )} saved: refreshed metadata`,
                            false
                         )
                      })

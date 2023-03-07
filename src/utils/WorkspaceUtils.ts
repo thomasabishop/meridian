@@ -9,7 +9,7 @@ import { IndexMetadata } from "../views/treeviews/metadata-index/IndexMetadata"
 import IWorkspaceMap from "../types/IWorkspaceMap"
 import { printChannelOutput } from "./logger"
 export class WorkspaceUtils {
-   private _workspaceRoot: string | undefined
+   public workspaceRoot: string | undefined
    private dirsToIgnore: string[] | undefined
    private context: vscode.ExtensionContext
    private workspaceContextUtils: WorkspaceContextUtils
@@ -18,19 +18,20 @@ export class WorkspaceUtils {
    private customTypeGuard: CustomTypeGuards = new CustomTypeGuards()
    constructor(context: vscode.ExtensionContext) {
       this.context = context
-      this._workspaceRoot = this.determineWorkspaceRoot()
+      this.workspaceRoot = this.determineWorkspaceRoot()
       this.dirsToIgnore = this.retrieveDirsToIgnore(".git")
       this.workspaceContextUtils = new WorkspaceContextUtils(context)
       this.fileSystemUtils = new FileSystemUtils()
       this.indexMetadata = new IndexMetadata(context)
    }
 
-   public get workspaceFiles(): any {
-      return this.collateWorkspaceFiles()
-   }
-
-   public get workspaceRoot() {
-      return this._workspaceRoot
+   public async collateWorkspaceFiles(): Promise<string[] | undefined> {
+      if (typeof this.workspaceRoot === "string") {
+         return await readDirRecurse(
+            path.resolve(this.workspaceRoot),
+            this.dirsToIgnore
+         )
+      }
    }
 
    public async createMeridianMap(): Promise<void | undefined> {
@@ -52,6 +53,8 @@ export class WorkspaceUtils {
    public async indexSingleFile(
       file: string
    ): Promise<Map<string, IWorkspaceMap> | undefined> {
+      // In case where we are reindexing on save, it is not necessary to re-collate workspace files, it is only necessary if a file has been created, renamed, or deleted. As saving is more frequent than any of these other cases, blocking reindex here would be beneficial.
+
       const allFiles = await this.collateWorkspaceFiles()
       try {
          if (this.customTypeGuard.isStringArray(allFiles)) {
@@ -73,7 +76,7 @@ export class WorkspaceUtils {
                   "tags"
                ),
                outlinks: [...new Set(outlinks)],
-               inlinks: await indexHyperlinks.indexInlinks(file),
+               // inlinks: await indexHyperlinks.indexInlinks(file),
             }
 
             return await this.workspaceContextUtils.updateWorkspaceMapEntry(
@@ -88,17 +91,8 @@ export class WorkspaceUtils {
       }
    }
 
-   private async collateWorkspaceFiles(): Promise<string[] | undefined> {
-      if (typeof this._workspaceRoot === "string") {
-         return await readDirRecurse(
-            path.resolve(this._workspaceRoot),
-            this.dirsToIgnore
-         )
-      }
-   }
-
    private async indexWorkspace(): Promise<IWorkspaceMap[] | undefined> {
-      const allFiles = await this.workspaceFiles
+      const allFiles = await this.collateWorkspaceFiles()
       try {
          if (this.customTypeGuard.isStringArray(allFiles)) {
             const indexHyperlinks: IndexHyperlinks = new IndexHyperlinks(
@@ -123,15 +117,17 @@ export class WorkspaceUtils {
                   inlinks: [],
                })
             }
-            let workspacePlusInlinks =
+            const collateWorkspaceWithInlinks =
                indexHyperlinks.generateInlinks(workspace)
 
-            return workspacePlusInlinks
+            return collateWorkspaceWithInlinks
          }
       } catch (err) {
          printChannelOutput(`${err}`, true, "error")
       } finally {
-         printChannelOutput(`${allFiles.length} files indexed`, false)
+         if (allFiles !== undefined) {
+            printChannelOutput(`${allFiles.length} files indexed`, false)
+         }
       }
    }
 

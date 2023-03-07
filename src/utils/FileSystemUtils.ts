@@ -18,6 +18,10 @@ export class FileSystemUtils {
       }
    }
 
+   // TODO: see if this supercedes the method above
+   public extractFileNameFromFullPath(fullPath: string) {
+      return path.basename(fullPath, "md")
+   }
    public stripAnchorFromLink(link: string): string {
       return link.includes("#") ? link.split("#")[0] : link
    }

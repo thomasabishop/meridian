@@ -11,7 +11,7 @@ export class IndexHyperlinksProvider
 {
    public _activeFile: string | undefined
    public context: vscode.ExtensionContext
-   public workspaceFiles: string[]
+   public workspaceFiles: string[] | undefined
    private hyperlinks: Promise<TreeItem[] | undefined>
    private fileSystemUtils: FileSystemUtils
    private workspaceRoot: string | undefined
@@ -23,13 +23,14 @@ export class IndexHyperlinksProvider
    constructor(
       activeFile: string | undefined,
       workspaceRoot: string | undefined,
-      workspaceFiles: string[],
+      workspaceFiles: string[] | undefined,
       context: vscode.ExtensionContext
    ) {
       this._activeFile = activeFile
       this.workspaceRoot = workspaceRoot
       this.fileSystemUtils = new FileSystemUtils()
-      ;(this.workspaceFiles = workspaceFiles), (this.context = context)
+      this.workspaceFiles = workspaceFiles
+      this.context = context
    }
 
    public get activeFile() {
@@ -43,11 +44,13 @@ export class IndexHyperlinksProvider
    public async generateLinks(
       linkType: LinkTypes
    ): Promise<TreeItem[] | undefined> {
-      const indexer = new IndexHyperlinks(this.context, this.workspaceFiles)
-      if (typeof this.activeFile === "string") {
-         const links = await indexer.retrieveLinks(this.activeFile, linkType)
-         if (links !== undefined) {
-            return this.transformLinksToTreeItem(links)
+      if (this.workspaceFiles !== undefined) {
+         const indexer = new IndexHyperlinks(this.context, this.workspaceFiles)
+         if (typeof this.activeFile === "string") {
+            const links = await indexer.retrieveLinks(this.activeFile, linkType)
+            if (links !== undefined) {
+               return this.transformLinksToTreeItem(links)
+            }
          }
       }
    }

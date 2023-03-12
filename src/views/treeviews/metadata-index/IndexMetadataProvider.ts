@@ -1,8 +1,8 @@
-import { LinkTypes } from "./../hyperlinks-index/IndexHyperlinks"
 import { WorkspaceContextUtils } from "./../../../utils/WorkspaceContextUtils"
 import IMetadataMap, { IndexMetadata, MetadataTypes } from "./IndexMetadata"
 import * as vscode from "vscode"
 import * as lodash from "lodash"
+import { MeridianIndexCrud } from "../../../main/MeridianIndexCrud"
 
 /**
  * Extends the default VS Code TreeDataProvider.
@@ -15,6 +15,7 @@ export class IndexMetadataProvider
    private context: vscode.ExtensionContext
    private readonly metadataType: MetadataTypes
    private metadataIndex: Promise<TreeItem[] | undefined> | TreeItem[]
+   private meridianIndexCrud: MeridianIndexCrud
 
    private _onDidChangeTreeData: vscode.EventEmitter<undefined | null | void> =
       new vscode.EventEmitter<undefined | null | void>()
@@ -28,6 +29,7 @@ export class IndexMetadataProvider
       this.context = workspaceContext
       this.metadataType = metadataType
       this.metadataIndex = this.generateMetadataIndex()
+      this.meridianIndexCrud = new MeridianIndexCrud(workspaceContext)
    }
 
    public getTreeItem(
@@ -67,7 +69,7 @@ export class IndexMetadataProvider
       const workspaceContextUtils = new WorkspaceContextUtils(this.context)
       if (activeFile !== undefined && metadataType !== undefined) {
          const metadataForFile =
-            await workspaceContextUtils.getMeridianEntryProperty(
+            await this.meridianIndexCrud.getMeridianEntryProperty(
                metadataType,
                activeFile
             )

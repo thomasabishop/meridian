@@ -1,17 +1,17 @@
-import { CustomTypeGuards } from "./CustomTypeGuards"
-import { WorkspaceContextUtils } from "./WorkspaceContextUtils"
+import { CustomTypeGuards } from "../utils/CustomTypeGuards"
+import { WorkspaceContextUtils } from "../utils/WorkspaceContextUtils"
 import * as path from "path"
 import * as vscode from "vscode"
 import * as readDirRecurse from "recursive-readdir"
-import { FileSystemUtils } from "./FileSystemUtils"
+import { FileSystemUtils } from "../utils/FileSystemUtils"
 import { IndexHyperlinks } from "../views/treeviews/hyperlinks-index/IndexHyperlinks"
 import {
    IndexMetadata,
    MetadataTypes,
 } from "../views/treeviews/metadata-index/IndexMetadata"
-import { printChannelOutput } from "./logger"
+import { printChannelOutput } from "../utils/logger"
 
-export class WorkspaceUtils {
+export class Meridian {
    public workspaceRoot: string | undefined
    private dirsToIgnore: string[] | undefined
    private context: vscode.ExtensionContext

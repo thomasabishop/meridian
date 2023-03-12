@@ -1,23 +1,24 @@
 import * as vscode from "vscode"
 import { FileSystemUtils } from "./utils/FileSystemUtils"
 import { WorkspaceContextUtils } from "./utils/WorkspaceContextUtils"
-import { WorkspaceUtils } from "./utils/WorkspaceUtils"
+import { Meridian } from "./main/Meridian"
 import { IndexMetadataProvider } from "./views/treeviews/metadata-index/IndexMetadataProvider"
 import { printChannelOutput } from "./utils/logger"
 import { IndexHyperlinksProvider } from "./views/treeviews/hyperlinks-index/IndexHyperlinksProvider"
 import { LinkTypes } from "./views/treeviews/hyperlinks-index/IndexHyperlinks"
 import { MetadataTypes } from "./views/treeviews/metadata-index/IndexMetadata"
+
 export async function activate(context: vscode.ExtensionContext) {
-   const workspaceUtils = new WorkspaceUtils(context)
-   await workspaceUtils
+   const meridian = new Meridian(context)
+   await meridian
       .createMeridianIndex()
       .then(async () => {
-         const workspaceFiles = await workspaceUtils.collateWorkspaceFiles()
-         const workspaceRoot = workspaceUtils.workspaceRoot
+         const workspaceFiles = await meridian.collateWorkspaceFiles()
+         const workspaceRoot = meridian.workspaceRoot
          const activeEditor = vscode.window.activeTextEditor?.document.fileName
          const fileSystemUtils = new FileSystemUtils()
          const workspaceContextutils = new WorkspaceContextUtils(context)
-         // const logger = new Logger()
+
          /**
           * Register views
           */
@@ -118,7 +119,7 @@ export async function activate(context: vscode.ExtensionContext) {
                )
 
                if (isMarkdownRename) {
-                  workspaceUtils
+                  meridian
                      .createMeridianIndex()
                      .then(() => {
                         categoriesView.refreshIndex()

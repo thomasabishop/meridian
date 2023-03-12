@@ -1,20 +1,19 @@
-import { IMeridianEntry } from "./../../../utils/WorkspaceUtils"
+import { IMeridianEntry, IMeridianIndex } from "../../../main/Meridian"
 import { CustomTypeGuards } from "../../../utils/CustomTypeGuards"
 import { FileSystemUtils } from "./../../../utils/FileSystemUtils"
 import * as markdownLinkExtractor from "markdown-link-extractor"
 import * as fs from "fs"
 import * as vscode from "vscode"
-import { IMeridianIndex } from "./../../../utils/WorkspaceUtils"
-import { WorkspaceContextUtils } from "./../../../utils/WorkspaceContextUtils"
+import { MeridianIndexCrud } from "../../../main/MeridianIndexCrud"
 
 export class IndexHyperlinks {
    public workspaceFiles: string[]
-   private workspaceContextUtils: WorkspaceContextUtils
+   private meridianIndexCrud: MeridianIndexCrud
    private fileSystemUtils = new FileSystemUtils()
    private customTypeGuards = new CustomTypeGuards()
    constructor(context: vscode.ExtensionContext, workspaceFiles: string[]) {
-      this.workspaceContextUtils = new WorkspaceContextUtils(context)
       this.workspaceFiles = workspaceFiles
+      this.meridianIndexCrud = new MeridianIndexCrud(context)
    }
 
    // Retrieve outlinks/ inlinks for a given file from the workspace map
@@ -27,11 +26,10 @@ export class IndexHyperlinks {
       | undefined
    > {
       if (activeFile !== undefined) {
-         const links =
-            await this.workspaceContextUtils.getMeridianEntryProperty(
-               linkType,
-               activeFile
-            )
+         const links = await this.meridianIndexCrud.getMeridianEntryProperty(
+            linkType,
+            activeFile
+         )
          if (
             links !== undefined &&
             typeof links !== "string" && //why is this check necessary?

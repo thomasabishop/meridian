@@ -2,7 +2,7 @@ import * as fs from "fs"
 import * as yamlFrontMatter from "yaml-front-matter"
 import * as vscode from "vscode"
 import { WorkspaceContextUtils } from "./../../../utils/WorkspaceContextUtils"
-import { IMeridianEntry } from "./../../../utils/WorkspaceUtils"
+import { IMeridianEntry } from "../../../main/Meridian"
 
 /**
  * Create indices of Markdown frontmatter.

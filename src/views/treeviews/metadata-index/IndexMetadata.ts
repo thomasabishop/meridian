@@ -1,9 +1,8 @@
 import * as fs from "fs"
 import * as yamlFrontMatter from "yaml-front-matter"
 import * as vscode from "vscode"
-import IWorkspaceMap from "../../../types/IWorkspaceMap"
 import { WorkspaceContextUtils } from "./../../../utils/WorkspaceContextUtils"
-import IMetadataIndex from "../../../types/IMetadataIndex"
+import { IMeridianEntry } from "./../../../utils/WorkspaceUtils"
 
 /**
  * Create indices of Markdown frontmatter.
@@ -16,20 +15,22 @@ export class IndexMetadata {
    }
 
    public async collateAllMetadataOfType(
-      metadataType: string
-   ): Promise<IMetadataIndex[]> {
-      const meridianMap =
+      metadataType: MetadataTypes
+   ): Promise<IMetadataMap[]> {
+      const meridianIndex =
          await this.workspaceContextUtils.readFromWorkspaceContext("MERIDIAN")
-      let metadataIndex: IMetadataIndex[] = []
+      let metadataMap: IMetadataMap[] = []
 
-      meridianMap &&
-         meridianMap?.forEach((value, key) => {
+      if (meridianIndex !== undefined) {
+         for (const [key, value] of Object.entries(meridianIndex)) {
             let type =
-               metadataType === "categories" ? value.categories : value.tags
+               metadataType === MetadataTypes.Categories
+                  ? value.categories
+                  : value.tags
             if (type !== undefined) {
                for (const instance of type) {
-                  if (!metadataIndex.some((x) => x.token === instance)) {
-                     metadataIndex.push({
+                  if (!metadataMap.some((x) => x.token === instance)) {
+                     metadataMap.push({
                         token: instance,
                         files: [
                            {
@@ -39,8 +40,8 @@ export class IndexMetadata {
                         ],
                      })
                   } else {
-                     metadataIndex
-                        .filter((y) => y.token === instance)[0]
+                     metadataMap
+                        .filter((x) => x.token === instance)[0]
                         .files.push({
                            filePath: key,
                            fileTitle: value?.title,
@@ -48,20 +49,36 @@ export class IndexMetadata {
                   }
                }
             }
-         })
-      return metadataIndex
+         }
+      }
+      return metadataMap
    }
 
    public async extractMetadataForFile(
       markdownFile: string,
-      metadatumType: string
-   ): Promise<IWorkspaceMap["categories"] | IWorkspaceMap["tags"]> {
+      metadatumType: MetadataTypes
+   ): Promise<
+      | IMeridianEntry[MetadataTypes.Categories]
+      | IMeridianEntry[MetadataTypes.Tags]
+   > {
       const fileContents = await fs.promises.readFile(markdownFile, "utf-8")
       let metadata = yamlFrontMatter.loadFront(fileContents)[metadatumType]
-      // eslint-disable-next-line eqeqeq
       if (metadata == null) {
          return
       }
       return metadata
    }
+}
+
+export default interface IMetadataMap {
+   token: string
+   files: {
+      filePath: string
+      fileTitle?: string | undefined
+   }[]
+}
+
+export enum MetadataTypes {
+   Categories = "categories",
+   Tags = "tags",
 }

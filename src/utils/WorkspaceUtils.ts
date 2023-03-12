@@ -1,13 +1,16 @@
-import { CustomTypeGuards } from "../types/CustomTypeGuards"
+import { CustomTypeGuards } from "./CustomTypeGuards"
 import { WorkspaceContextUtils } from "./WorkspaceContextUtils"
 import * as path from "path"
 import * as vscode from "vscode"
 import * as readDirRecurse from "recursive-readdir"
 import { FileSystemUtils } from "./FileSystemUtils"
 import { IndexHyperlinks } from "../views/treeviews/hyperlinks-index/IndexHyperlinks"
-import { IndexMetadata } from "../views/treeviews/metadata-index/IndexMetadata"
-import IWorkspaceMap from "../types/IWorkspaceMap"
+import {
+   IndexMetadata,
+   MetadataTypes,
+} from "../views/treeviews/metadata-index/IndexMetadata"
 import { printChannelOutput } from "./logger"
+
 export class WorkspaceUtils {
    public workspaceRoot: string | undefined
    private dirsToIgnore: string[] | undefined
@@ -16,6 +19,7 @@ export class WorkspaceUtils {
    private fileSystemUtils: FileSystemUtils
    private indexMetadata: IndexMetadata
    private customTypeGuard: CustomTypeGuards = new CustomTypeGuards()
+
    constructor(context: vscode.ExtensionContext) {
       this.context = context
       this.workspaceRoot = this.determineWorkspaceRoot()
@@ -34,27 +38,60 @@ export class WorkspaceUtils {
       }
    }
 
-   public async createMeridianMap(): Promise<void | undefined> {
-      const meridianMap = new Map<string, IWorkspaceMap>()
+   public async createMeridianIndex(): Promise<void | undefined> {
+      //   const meridianIndex: IMeridianIndex = {}
       const workspace = await this.indexWorkspace()
 
       if (workspace !== undefined) {
-         workspace.map((entry) => {
-            meridianMap.set(entry.fullPath, entry)
-         })
-
          return await this.workspaceContextUtils.writeToWorkspaceContext(
             "MERIDIAN",
-            meridianMap
+            workspace
          )
       }
    }
 
-   public async indexSingleFile(
-      file: string
-   ): Promise<Map<string, IWorkspaceMap> | undefined> {
-      // In case where we are reindexing on save, it is not necessary to re-collate workspace files, it is only necessary if a file has been created, renamed, or deleted. As saving is more frequent than any of these other cases, blocking reindex here would be beneficial.
+   // public async indexSingleFile(
+   //    file: string
+   // ): Promise<Map<string, IWorkspaceMap> | undefined> {
+   //    // In case where we are reindexing on save, it is not necessary to re-collate workspace files, it is only necessary if a file has been created, renamed, or deleted. As saving is more frequent than any of these other cases, blocking reindex here would be beneficial.
 
+   //    const allFiles = await this.collateWorkspaceFiles()
+   //    try {,
+   //       if (this.customTypeGuard.isStringArray(allFiles)) {
+   //          const indexHyperlinks: IndexHyperlinks = new IndexHyperlinks(
+   //             this.context,
+   //             allFiles
+   //          )
+
+   //          const outlinks = await indexHyperlinks.parseFileForLinks(file)
+   //          const workspaceEntry: IWorkspaceMap = {
+   //             fullPath: file,
+   //             title: this.fileSystemUtils.parseFileTitle(file),
+   //             categories: await this.indexMetadata.extractMetadataForFile(
+   //                file,
+   //                "categories"
+   //             ),
+   //             tags: await this.indexMetadata.extractMetadataForFile(
+   //                file,
+   //                "tags"
+   //             ),
+   //             outlinks: [...new Set(outlinks)],
+   //             // inlinks: await indexHyperlinks.indexInlinks(file),
+   //          }
+
+   //          return await this.workspaceContextUtils.updateWorkspaceMapEntry(
+   //             file,
+   //             workspaceEntry
+   //          )
+   //       }
+   //    } catch (err) {
+   //       printChannelOutput(`${err}`, true, "error")
+   //    } finally {
+   //       printChannelOutput(`Added ${file} to Meridian index`)
+   //    }
+   // }
+
+   private async indexWorkspace(): Promise<IMeridianIndex | undefined> {
       const allFiles = await this.collateWorkspaceFiles()
       try {
          if (this.customTypeGuard.isStringArray(allFiles)) {
@@ -63,62 +100,28 @@ export class WorkspaceUtils {
                allFiles
             )
 
-            const outlinks = await indexHyperlinks.parseFileForLinks(file)
-            const workspaceEntry: IWorkspaceMap = {
-               fullPath: file,
-               title: this.fileSystemUtils.parseFileTitle(file),
-               categories: await this.indexMetadata.extractMetadataForFile(
-                  file,
-                  "categories"
-               ),
-               tags: await this.indexMetadata.extractMetadataForFile(
-                  file,
-                  "tags"
-               ),
-               outlinks: [...new Set(outlinks)],
-               // inlinks: await indexHyperlinks.indexInlinks(file),
-            }
+            let meridianIndex: IMeridianIndex = {}
 
-            return await this.workspaceContextUtils.updateWorkspaceMapEntry(
-               file,
-               workspaceEntry
-            )
-         }
-      } catch (err) {
-         printChannelOutput(`${err}`, true, "error")
-      } finally {
-         printChannelOutput(`Added ${file} to Meridian index`)
-      }
-   }
-
-   private async indexWorkspace(): Promise<IWorkspaceMap[] | undefined> {
-      const allFiles = await this.collateWorkspaceFiles()
-      try {
-         if (this.customTypeGuard.isStringArray(allFiles)) {
-            const indexHyperlinks: IndexHyperlinks = new IndexHyperlinks(
-               this.context,
-               allFiles
-            )
-            let workspace: IWorkspaceMap[] = []
             for (const file of allFiles) {
                let outlinks = await indexHyperlinks.parseFileForLinks(file)
-               workspace.push({
+
+               meridianIndex[file] = {
                   fullPath: file,
                   title: this.fileSystemUtils.parseFileTitle(file),
                   categories: await this.indexMetadata.extractMetadataForFile(
                      file,
-                     "categories"
+                     MetadataTypes.Categories
                   ),
                   tags: await this.indexMetadata.extractMetadataForFile(
                      file,
-                     "tags"
+                     MetadataTypes.Tags
                   ),
                   outlinks: [...new Set(outlinks)],
                   inlinks: [],
-               })
+               }
             }
             const collateWorkspaceWithInlinks =
-               indexHyperlinks.generateInlinks(workspace)
+               indexHyperlinks.generateInlinks(meridianIndex)
 
             return collateWorkspaceWithInlinks
          }
@@ -154,4 +157,18 @@ export class WorkspaceUtils {
          return [inp, ...ignoreDirs]
       }
    }
+}
+
+export interface IMeridianIndex {
+   [key: string]: IMeridianEntry
+}
+
+export interface IMeridianEntry {
+   [key: string]: string | string[] | undefined
+   title: string
+   fullPath: string
+   categories?: string[]
+   tags?: string[]
+   outlinks?: string[]
+   inlinks?: string[]
 }

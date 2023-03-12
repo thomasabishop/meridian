@@ -1,5 +1,6 @@
+import { IMeridianIndex } from "./WorkspaceUtils"
 import * as vscode from "vscode"
-import IWorkspaceMap from "../types/IWorkspaceMap"
+import { IMeridianEntry } from "./WorkspaceUtils"
 export class WorkspaceContextUtils {
    private context: vscode.ExtensionContext
    constructor(context: vscode.ExtensionContext) {
@@ -9,6 +10,7 @@ export class WorkspaceContextUtils {
    /**
     * Methods to modify the VSCode Workspace state
     */
+
    public async writeToWorkspaceContext(
       key: string,
       value: any
@@ -18,7 +20,7 @@ export class WorkspaceContextUtils {
 
    public async readFromWorkspaceContext(
       key: string
-   ): Promise<Map<string, IWorkspaceMap> | undefined> {
+   ): Promise<IMeridianIndex | undefined> {
       return await this.context?.workspaceState?.get(key)
    }
 
@@ -30,50 +32,55 @@ export class WorkspaceContextUtils {
     * Methods to modify the Meridian map object stored in VSCode Workspace state
     */
 
-   public async retrieveWorkspaceMapEntry(
-      mapKey: IWorkspaceMap["fullPath"]
-   ): Promise<IWorkspaceMap | undefined> {
-      if (mapKey !== undefined) {
-         const workspaceMap = await this.readFromWorkspaceContext("MERIDIAN")
-         const mapEntry = workspaceMap?.get(mapKey)
-         return mapEntry
-      }
-   }
-
-   public async updateWorkspaceMapEntry(
-      mapKey: IWorkspaceMap["fullPath"],
-      payload: IWorkspaceMap
-   ) {
-      const workspaceMap = await this.readFromWorkspaceContext("MERIDIAN")
-      return workspaceMap?.set(mapKey, payload)
-   }
-
-   public async deleteWorkspaceMapEntry(mapKey: IWorkspaceMap["fullPath"]) {
-      const workspaceMap = await this.readFromWorkspaceContext("MERIDIAN")
-      return workspaceMap?.delete(mapKey)
-   }
-
-   public async retrieveWorkspaceMapEntryProp(
-      propType: keyof IWorkspaceMap,
-      mapKey: IWorkspaceMap["fullPath"]
-   ): Promise<IWorkspaceMap[keyof IWorkspaceMap]> {
-      if (mapKey !== undefined) {
-         const mapEntry = await this.retrieveWorkspaceMapEntry(mapKey)
-         if (mapEntry !== undefined) {
-            return mapEntry[propType]
+   public async getMeridianEntry(
+      key: string
+   ): Promise<IMeridianEntry | undefined> {
+      if (key !== undefined) {
+         const workspaceIndex = await this.readFromWorkspaceContext("MERIDIAN")
+         if (workspaceIndex !== undefined && key in workspaceIndex) {
+            return workspaceIndex[key]
          }
       }
    }
 
-   public async updateWorkspaceMapEntryProp(
-      propType: keyof IWorkspaceMap,
-      mapKey: IWorkspaceMap["fullPath"],
-      payload: IWorkspaceMap[keyof IWorkspaceMap]
+   public async updateMeridianEntry(
+      key: string,
+      payload: IMeridianEntry
    ): Promise<void> {
-      if (mapKey !== undefined) {
-         const mapEntry = await this.retrieveWorkspaceMapEntry(mapKey)
-         if (mapEntry !== undefined) {
-            mapEntry[propType] = payload
+      const workspaceIndex = await this.readFromWorkspaceContext("MERIDIAN")
+      if (workspaceIndex !== undefined && key in workspaceIndex) {
+         workspaceIndex[key] = payload
+      }
+   }
+
+   public async deleteMeridianEntry(key: string): Promise<void> {
+      const workspaceIndex = await this.readFromWorkspaceContext("MERIDIAN")
+      if (workspaceIndex !== undefined && key in workspaceIndex) {
+         delete workspaceIndex[key]
+      }
+   }
+
+   public async getMeridianEntryProperty(
+      property: keyof IMeridianEntry,
+      key: string
+   ): Promise<string | string[] | undefined> {
+      if (key !== undefined) {
+         const entry = await this.getMeridianEntry(key)
+         if (entry !== undefined) {
+            return entry[property]
+         }
+      }
+   }
+
+   public async updateMeridianEntryProperty(
+      property: keyof IMeridianEntry,
+      key: string,
+      payload: string | string[]
+   ): Promise<void> {
+      if (key !== undefined) {
+         const entry = await this.getMeridianEntry(key)
+         if (entry !== undefined) {
+            entry[key] = payload
          }
       }
    }

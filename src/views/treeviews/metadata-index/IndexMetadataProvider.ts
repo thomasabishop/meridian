@@ -1,13 +1,11 @@
+import { LinkTypes } from "./../hyperlinks-index/IndexHyperlinks"
 import { WorkspaceContextUtils } from "./../../../utils/WorkspaceContextUtils"
-import { WorkspaceUtils } from "./../../../utils/WorkspaceUtils"
-import IWorkspaceMap from "../../../types/IWorkspaceMap"
-import { IndexMetadata } from "./IndexMetadata"
+import IMetadataMap, { IndexMetadata, MetadataTypes } from "./IndexMetadata"
 import * as vscode from "vscode"
 import * as lodash from "lodash"
-import IMetadataIndex from "../../../types/IMetadataIndex"
 
 /**
- * Extension of the default VS Code TreeDataProvider.
+ * Extends the default VS Code TreeDataProvider.
  * Used to create TreeViews of markdown metadata.
  */
 
@@ -15,7 +13,7 @@ export class IndexMetadataProvider
    implements vscode.TreeDataProvider<TreeItem>
 {
    private context: vscode.ExtensionContext
-   private readonly metadataType: string
+   private readonly metadataType: MetadataTypes
    private metadataIndex: Promise<TreeItem[] | undefined> | TreeItem[]
 
    private _onDidChangeTreeData: vscode.EventEmitter<undefined | null | void> =
@@ -25,7 +23,7 @@ export class IndexMetadataProvider
 
    constructor(
       workspaceContext: vscode.ExtensionContext,
-      metadataType: string
+      metadataType: MetadataTypes
    ) {
       this.context = workspaceContext
       this.metadataType = metadataType
@@ -63,13 +61,13 @@ export class IndexMetadataProvider
 
    // Return segment of metadata scoped to the currently active editor:
    public async filterMetadataIndexForCurrentFile(
-      metadataType: keyof IWorkspaceMap | undefined, // categories or tags
+      metadataType: MetadataTypes, // categories or tags
       activeFile: string | undefined
    ): Promise<void> {
       const workspaceContextUtils = new WorkspaceContextUtils(this.context)
       if (activeFile !== undefined && metadataType !== undefined) {
          const metadataForFile =
-            await workspaceContextUtils.retrieveWorkspaceMapEntryProp(
+            await workspaceContextUtils.getMeridianEntryProperty(
                metadataType,
                activeFile
             )
@@ -93,11 +91,11 @@ export class IndexMetadataProvider
    }
 
    private transformMetadataToTreeItem(
-      metadataIndex: IMetadataIndex[]
+      metadataIndex: IMetadataMap[]
    ): TreeItem[] {
       let transformed: TreeItem[]
 
-      const populateTreeItemChildren = (fileRefs: IMetadataIndex["files"]) =>
+      const populateTreeItemChildren = (fileRefs: IMetadataMap["files"]) =>
          fileRefs
             .filter((fileRef) => fileRef.fileTitle !== undefined)
             .map(
@@ -110,7 +108,7 @@ export class IndexMetadataProvider
             )
 
       transformed = metadataIndex.map(
-         (datum: IMetadataIndex) =>
+         (datum: IMetadataMap) =>
             new TreeItem(datum.token, [
                ...populateTreeItemChildren(datum.files),
             ])

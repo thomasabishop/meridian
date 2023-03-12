@@ -14,7 +14,6 @@ export class IndexHyperlinksProvider
    public workspaceFiles: string[] | undefined
    private hyperlinks: Promise<TreeItem[] | undefined>
    private fileSystemUtils: FileSystemUtils
-   private workspaceRoot: string | undefined
    private _onDidChangeTreeData: vscode.EventEmitter<undefined | null | void> =
       new vscode.EventEmitter<undefined | null | void>()
    readonly onDidChangeTreeData: vscode.Event<undefined | null | void> =
@@ -22,12 +21,10 @@ export class IndexHyperlinksProvider
 
    constructor(
       activeFile: string | undefined,
-      workspaceRoot: string | undefined,
       workspaceFiles: string[] | undefined,
       context: vscode.ExtensionContext
    ) {
       this._activeFile = activeFile
-      this.workspaceRoot = workspaceRoot
       this.fileSystemUtils = new FileSystemUtils()
       this.workspaceFiles = workspaceFiles
       this.context = context
@@ -47,7 +44,7 @@ export class IndexHyperlinksProvider
       if (this.workspaceFiles !== undefined) {
          const indexer = new IndexHyperlinks(this.context, this.workspaceFiles)
          if (typeof this.activeFile === "string") {
-            const links = await indexer.retrieveLinks(this.activeFile, linkType)
+            const links = await indexer.getLinks(this.activeFile, linkType)
             if (links !== undefined) {
                return this.transformLinksToTreeItem(links)
             }
@@ -70,10 +67,8 @@ export class IndexHyperlinksProvider
             title: "",
             arguments: [link],
          })
-         treeItem.tooltip = this.fileSystemUtils.removeRootPath(
-            link,
-            this.workspaceRoot
-         )
+         treeItem.tooltip =
+            this.fileSystemUtils.extractFileNameFromFullPath(link)
          transformed.push(treeItem)
       }
       return transformed

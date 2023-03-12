@@ -9,16 +9,6 @@ export class FileSystemUtils {
       return path.extname(file) === ".md"
    }
 
-   public removeRootPath(
-      file: string,
-      workspaceRoot: string | undefined
-   ): string | undefined {
-      if (typeof workspaceRoot === "string") {
-         return file.replace(`${workspaceRoot}/`, "")
-      }
-   }
-
-   // TODO: see if this supercedes the method above
    public extractFileNameFromFullPath(fullPath: string) {
       return path.basename(fullPath, "md")
    }

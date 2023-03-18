@@ -6,7 +6,6 @@ import { WorkspaceContextUtils } from "../utils/WorkspaceContextUtils"
  */
 
 export class MeridianIndexCrud {
-   // private context: vscode.ExtensionContext
    private workspaceContextUtils: WorkspaceContextUtils
 
    constructor(context: vscode.ExtensionContext) {

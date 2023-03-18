@@ -58,7 +58,7 @@ export class IndexHyperlinks {
 
    // Loop through each entry in the workspace map and construct inlink array for the entry from existing outlinks array
 
-   public generateInlinks(meridianIndex: IMeridianIndex): IMeridianIndex {
+   public collateInlinks(meridianIndex: IMeridianIndex): IMeridianIndex {
       for (const entry in meridianIndex) {
          let outlinks = meridianIndex[entry]?.outlinks
 
@@ -68,9 +68,11 @@ export class IndexHyperlinks {
                   let linkTarget =
                      this.fileSystemUtils.stripAnchorFromLink(outlink)
                   if (meridianIndex.hasOwnProperty(linkTarget)) {
-                     meridianIndex[linkTarget].inlinks?.push(
-                        meridianIndex[entry].fullPath
-                     )
+                     let targetInlinks = meridianIndex[linkTarget].inlinks
+                     let newInlink = meridianIndex[entry].fullPath
+                     if (!targetInlinks?.includes(newInlink)) {
+                        targetInlinks?.push(newInlink)
+                     }
                   }
                }
             }

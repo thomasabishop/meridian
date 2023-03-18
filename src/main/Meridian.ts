@@ -39,7 +39,6 @@ export class Meridian {
    }
 
    public async createMeridianIndex(): Promise<void | undefined> {
-      //   const meridianIndex: IMeridianIndex = {}
       const workspace = await this.indexWorkspace()
 
       if (workspace !== undefined) {
@@ -121,7 +120,7 @@ export class Meridian {
                }
             }
             const collateWorkspaceWithInlinks =
-               indexHyperlinks.generateInlinks(meridianIndex)
+               indexHyperlinks.collateInlinks(meridianIndex)
 
             return collateWorkspaceWithInlinks
          }

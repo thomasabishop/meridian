@@ -17,8 +17,11 @@ export async function activate(context: vscode.ExtensionContext) {
          const workspaceRoot = meridian.workspaceRoot
          const activeEditor = vscode.window.activeTextEditor?.document.fileName
          const fileSystemUtils = new FileSystemUtils()
-         const workspaceContextutils = new WorkspaceContextUtils(context)
+         const workspaceContextUtils = new WorkspaceContextUtils(context)
 
+         const workspaceState =
+            await workspaceContextUtils.readFromWorkspaceContext("MERIDIAN")
+         console.log(workspaceState)
          /**
           * Register views
           */
@@ -75,9 +78,6 @@ export async function activate(context: vscode.ExtensionContext) {
                      printChannelOutput(
                         `Editor changed: refreshed inlinks/outlinks for file ${event?.document.fileName}`
                      )
-                     // printChannelOutput(
-                     //    `Editor changed: refreshed inlinks/outlinks for file ${event?.document.fileName}`
-                     // )
                   }
                }
             })

@@ -65,7 +65,7 @@ export class MeridianIndexCrud {
       if (key !== undefined) {
          const entry = await this.getMeridianEntry(key)
          if (entry !== undefined) {
-            entry[key] = payload
+            entry[property] = payload
          }
       }
    }

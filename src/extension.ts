@@ -21,7 +21,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
          const workspaceState =
             await workspaceContextUtils.readFromWorkspaceContext("MERIDIAN")
-         console.log(workspaceState)
+         //         console.log(workspaceState)
          /**
           * Register views
           */
@@ -62,8 +62,8 @@ export async function activate(context: vscode.ExtensionContext) {
           * Actions to execute on workspace events
           */
 
-         const onChangeEditorActions =
-            vscode.window.onDidChangeActiveTextEditor(async (event) => {
+         const onEditorChange = vscode.window.onDidChangeActiveTextEditor(
+            async (event) => {
                let currentlyActiveFile = event?.document.fileName
                if (currentlyActiveFile !== undefined) {
                   if (fileSystemUtils.fileIsMd(currentlyActiveFile)) {
@@ -80,33 +80,25 @@ export async function activate(context: vscode.ExtensionContext) {
                      )
                   }
                }
-            })
+            }
+         )
 
-         // const updateWorkspaceMapOnFileSave =
-         //    vscode.workspace.onDidSaveTextDocument(async (event) => {
-         //       const savedFile = event.fileName
-         //       if (fileSystemUtils.fileIsMd(savedFile)) {
-         //          await workspaceUtils
-         //             .indexSingleFile(savedFile)
-         //             .then(() => {
-         //                categoriesView.refreshIndex()
-         //                tagsView.refreshIndex()
-         //                outlinksView.refresh(savedFile, LinkTypes.Outlinks)
-         //                inlinksView.refresh(savedFile, LinkTypes.Inlinks)
-         //             })
-         //             .catch((err) => {
-         //                printChannelOutput(err, true, "error")
-         //             })
-         //             .finally(() => {
-         //                printChannelOutput(
-         //                   `File ${fileSystemUtils.extractFileNameFromFullPath(
-         //                      savedFile
-         //                   )} saved: refreshed metadata`,
-         //                   false
-         //                )
-         //             })
-         //       }
-         //    })
+         const onFileSave = vscode.workspace.onDidSaveTextDocument(
+            async (event) => {
+               const savedFile = event.fileName
+               if (fileSystemUtils.fileIsMd(savedFile) && workspaceFiles) {
+                  console.log("new save")
+                  return await meridian
+                     .reindexWorkspaceFile(savedFile, workspaceFiles)
+                     .then(() => {
+                        categoriesView.refreshIndex()
+                        tagsView.refreshIndex()
+                        outlinksView.refresh(savedFile, LinkTypes.Outlinks)
+                        inlinksView.refresh(savedFile, LinkTypes.Inlinks)
+                     })
+               }
+            }
+         )
 
          // Force full reindex of workspace map if file is renamed or moved to different sub-directory
          // TODO: Tech debt: not happy about the inefficiency of this but unable to reindex single file and  have cat and tag tree views update in response.
@@ -230,8 +222,8 @@ export async function activate(context: vscode.ExtensionContext) {
           */
 
          context.subscriptions.push(
-            onChangeEditorActions,
-            //  updateWorkspaceMapOnFileSave,
+            onEditorChange,
+            onFileSave,
             updateMeridianMapOnFileRename,
             //  updateMeridianMapOnFileDelete,
             scopeCatsCommand,

@@ -1,16 +1,17 @@
-import { CustomTypeGuards } from "../utils/CustomTypeGuards"
+import { ArrayUtils } from "./../utils/ArrayUtils"
+import { IndexHyperlinks } from "./../views/treeviews/hyperlinks-index/IndexHyperlinks"
+import { MeridianIndexCrud } from "./MeridianIndexCrud"
 import { WorkspaceContextUtils } from "../utils/WorkspaceContextUtils"
 import * as path from "path"
 import * as vscode from "vscode"
 import * as readDirRecurse from "recursive-readdir"
 import { FileSystemUtils } from "../utils/FileSystemUtils"
-import { IndexHyperlinks } from "../views/treeviews/hyperlinks-index/IndexHyperlinks"
 import {
    IndexMetadata,
    MetadataTypes,
 } from "../views/treeviews/metadata-index/IndexMetadata"
 import { printChannelOutput } from "../utils/logger"
-
+import { LinkTypes } from "./../views/treeviews/hyperlinks-index/IndexHyperlinks"
 export class Meridian {
    public workspaceRoot: string | undefined
    private dirsToIgnore: string[] | undefined
@@ -18,8 +19,7 @@ export class Meridian {
    private workspaceContextUtils: WorkspaceContextUtils
    private fileSystemUtils: FileSystemUtils
    private indexMetadata: IndexMetadata
-   private customTypeGuard: CustomTypeGuards = new CustomTypeGuards()
-
+   private arrayUtils: ArrayUtils = new ArrayUtils()
    constructor(context: vscode.ExtensionContext) {
       this.context = context
       this.workspaceRoot = this.determineWorkspaceRoot()
@@ -49,51 +49,10 @@ export class Meridian {
       }
    }
 
-   // public async indexSingleFile(
-   //    file: string
-   // ): Promise<Map<string, IWorkspaceMap> | undefined> {
-   //    // In case where we are reindexing on save, it is not necessary to re-collate workspace files, it is only necessary if a file has been created, renamed, or deleted. As saving is more frequent than any of these other cases, blocking reindex here would be beneficial.
-
-   //    const allFiles = await this.collateWorkspaceFiles()
-   //    try {,
-   //       if (this.customTypeGuard.isStringArray(allFiles)) {
-   //          const indexHyperlinks: IndexHyperlinks = new IndexHyperlinks(
-   //             this.context,
-   //             allFiles
-   //          )
-
-   //          const outlinks = await indexHyperlinks.parseFileForLinks(file)
-   //          const workspaceEntry: IWorkspaceMap = {
-   //             fullPath: file,
-   //             title: this.fileSystemUtils.parseFileTitle(file),
-   //             categories: await this.indexMetadata.extractMetadataForFile(
-   //                file,
-   //                "categories"
-   //             ),
-   //             tags: await this.indexMetadata.extractMetadataForFile(
-   //                file,
-   //                "tags"
-   //             ),
-   //             outlinks: [...new Set(outlinks)],
-   //             // inlinks: await indexHyperlinks.indexInlinks(file),
-   //          }
-
-   //          return await this.workspaceContextUtils.updateWorkspaceMapEntry(
-   //             file,
-   //             workspaceEntry
-   //          )
-   //       }
-   //    } catch (err) {
-   //       printChannelOutput(`${err}`, true, "error")
-   //    } finally {
-   //       printChannelOutput(`Added ${file} to Meridian index`)
-   //    }
-   // }
-
    private async indexWorkspace(): Promise<IMeridianIndex | undefined> {
       const allFiles = await this.collateWorkspaceFiles()
       try {
-         if (this.customTypeGuard.isStringArray(allFiles)) {
+         if (this.arrayUtils.isStringArray(allFiles)) {
             const indexHyperlinks: IndexHyperlinks = new IndexHyperlinks(
                this.context,
                allFiles
@@ -119,8 +78,9 @@ export class Meridian {
                   inlinks: [],
                }
             }
+
             const collateWorkspaceWithInlinks =
-               indexHyperlinks.collateInlinks(meridianIndex)
+               indexHyperlinks.collateAllInlinks(meridianIndex)
 
             return collateWorkspaceWithInlinks
          }
@@ -129,6 +89,111 @@ export class Meridian {
       } finally {
          if (allFiles !== undefined) {
             printChannelOutput(`${allFiles.length} files indexed`, false)
+         }
+      }
+   }
+
+   public async reindexWorkspaceFile(updatedFile: string, allFiles: string[]) {
+      const meridianIndexCrud = new MeridianIndexCrud(this.context)
+      const indexHyperlinks = new IndexHyperlinks(this.context, allFiles)
+      const existingEntry = await meridianIndexCrud.getMeridianEntry(
+         updatedFile
+      )
+
+      if (existingEntry) {
+         const { categories, tags, outlinks } = existingEntry
+
+         const reindexedCategories =
+            await this.indexMetadata.extractMetadataForFile(
+               updatedFile,
+               MetadataTypes.Categories
+            )
+
+         if (categories && reindexedCategories) {
+            if (this.arrayUtils.changesExist(categories, reindexedCategories)) {
+               await meridianIndexCrud.updateMeridianEntryProperty(
+                  MetadataTypes.Categories,
+                  existingEntry.fullPath,
+                  reindexedCategories
+               )
+            }
+         }
+
+         const reindexedTags = await this.indexMetadata.extractMetadataForFile(
+            updatedFile,
+            MetadataTypes.Tags
+         )
+
+         if (tags && reindexedTags) {
+            if (this.arrayUtils.changesExist(tags, reindexedTags)) {
+               await meridianIndexCrud.updateMeridianEntryProperty(
+                  MetadataTypes.Tags,
+                  existingEntry.fullPath,
+                  reindexedTags
+               )
+            }
+         }
+
+         const reindexedOutlinks = await indexHyperlinks.parseFileForLinks(
+            updatedFile
+         )
+
+         if (outlinks && reindexedOutlinks) {
+            if (this.arrayUtils.changesExist(outlinks, reindexedOutlinks)) {
+               const linksRemoved = this.arrayUtils.elementsRemoved(
+                  outlinks,
+                  reindexedOutlinks
+               )
+               const linksAdded = this.arrayUtils.elementsAdded(
+                  outlinks,
+                  reindexedOutlinks
+               )
+
+               if (linksRemoved.length) {
+                  for (let link of linksRemoved) {
+                     if (typeof link === "string") {
+                        let cleanPath =
+                           this.fileSystemUtils.stripAnchorFromLink(link)
+                        let inlinkTargetFile =
+                           await meridianIndexCrud.getMeridianEntry(cleanPath)
+                        if (inlinkTargetFile !== undefined) {
+                           if (
+                              inlinkTargetFile.inlinks?.includes(updatedFile)
+                           ) {
+                              const index =
+                                 inlinkTargetFile.inlinks.indexOf(updatedFile)
+                              if (index !== -1) {
+                                 inlinkTargetFile.inlinks.splice(index, 1)
+                              }
+                           }
+                        }
+                     }
+                  }
+               }
+
+               if (linksAdded.length) {
+                  for (let link of linksAdded) {
+                     if (typeof link === "string") {
+                        let cleanPath =
+                           this.fileSystemUtils.stripAnchorFromLink(link)
+                        let inlinkTargetFile =
+                           await meridianIndexCrud.getMeridianEntry(cleanPath)
+                        if (
+                           inlinkTargetFile !== undefined &&
+                           !inlinkTargetFile.inlinks?.includes(updatedFile)
+                        ) {
+                           inlinkTargetFile.inlinks?.push(updatedFile)
+                        }
+                     }
+                  }
+               }
+
+               await meridianIndexCrud.updateMeridianEntryProperty(
+                  LinkTypes.Outlinks,
+                  existingEntry.fullPath,
+                  reindexedOutlinks
+               )
+            }
          }
       }
    }

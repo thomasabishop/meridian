@@ -26,15 +26,13 @@ export class IndexHyperlinks {
       | undefined
    > {
       if (activeFile !== undefined) {
-         const links = await this.meridianIndexCrud.getMeridianEntryProperty(
+         let links = await this.meridianIndexCrud.getMeridianEntryProperty(
             linkType,
             activeFile
          )
-         if (
-            links !== undefined &&
-            typeof links !== "string" && //why is this check necessary?
-            this.customTypeGuards.isStringArray(links)
-         ) {
+
+         if (typeof links !== "string") {
+            links = links?.filter((link) => typeof link === "string")
             return links
          }
       }

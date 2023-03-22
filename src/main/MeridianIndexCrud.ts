@@ -26,6 +26,17 @@ export class MeridianIndexCrud {
       }
    }
 
+   public async createNewMeridianEntry(
+      newKey: string,
+      payload: IMeridianEntry
+   ) {
+      const workspaceIndex =
+         await this.workspaceContextUtils.readFromWorkspaceContext("MERIDIAN")
+      if (workspaceIndex !== undefined) {
+         workspaceIndex[newKey] = payload
+      }
+   }
+
    public async updateMeridianEntry(
       key: string,
       payload: IMeridianEntry

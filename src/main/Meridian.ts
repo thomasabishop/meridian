@@ -1,3 +1,4 @@
+import { MeridianEntry } from "./MeridianEntry"
 import { ArrayUtils } from "./../utils/ArrayUtils"
 import { IndexHyperlinks } from "./../views/treeviews/hyperlinks-index/IndexHyperlinks"
 import { MeridianIndexCrud } from "./MeridianIndexCrud"
@@ -49,6 +50,7 @@ export class Meridian {
       }
    }
 
+   // Index the entire workspace
    private async indexWorkspace(): Promise<IMeridianIndex | undefined> {
       const allFiles = await this.collateWorkspaceFiles()
       try {
@@ -93,22 +95,31 @@ export class Meridian {
       }
    }
 
-   public async reindexWorkspaceFile(updatedFile: string, allFiles: string[]) {
+   // Reindex an existing file or add a new single file to the index
+   public async indexWorkspaceFile(updatedFile: string, allFiles: string[]) {
       const meridianIndexCrud = new MeridianIndexCrud(this.context)
       const indexHyperlinks = new IndexHyperlinks(this.context, allFiles)
       const existingEntry = await meridianIndexCrud.getMeridianEntry(
          updatedFile
       )
+      const reindexedCategories =
+         await this.indexMetadata.extractMetadataForFile(
+            updatedFile,
+            MetadataTypes.Categories
+         )
 
+      const reindexedTags = await this.indexMetadata.extractMetadataForFile(
+         updatedFile,
+         MetadataTypes.Tags
+      )
+
+      const reindexedOutlinks = await indexHyperlinks.parseFileForLinks(
+         updatedFile
+      )
+
+      // If entry already exists for workspace file, update properties
       if (existingEntry) {
          const { categories, tags, outlinks } = existingEntry
-
-         const reindexedCategories =
-            await this.indexMetadata.extractMetadataForFile(
-               updatedFile,
-               MetadataTypes.Categories
-            )
-
          if (categories && reindexedCategories) {
             if (this.arrayUtils.changesExist(categories, reindexedCategories)) {
                await meridianIndexCrud.updateMeridianEntryProperty(
@@ -118,11 +129,6 @@ export class Meridian {
                )
             }
          }
-
-         const reindexedTags = await this.indexMetadata.extractMetadataForFile(
-            updatedFile,
-            MetadataTypes.Tags
-         )
 
          if (tags && reindexedTags) {
             if (this.arrayUtils.changesExist(tags, reindexedTags)) {
@@ -134,12 +140,9 @@ export class Meridian {
             }
          }
 
-         const reindexedOutlinks = await indexHyperlinks.parseFileForLinks(
-            updatedFile
-         )
-
          if (outlinks && reindexedOutlinks) {
             if (this.arrayUtils.changesExist(outlinks, reindexedOutlinks)) {
+               // Determine changes to outlink array, then update inlinks to reflect changes
                const linksRemoved = this.arrayUtils.elementsRemoved(
                   outlinks,
                   reindexedOutlinks
@@ -150,44 +153,14 @@ export class Meridian {
                )
 
                if (linksRemoved.length) {
-                  for (let link of linksRemoved) {
-                     if (typeof link === "string") {
-                        let cleanPath =
-                           this.fileSystemUtils.stripAnchorFromLink(link)
-                        let inlinkTargetFile =
-                           await meridianIndexCrud.getMeridianEntry(cleanPath)
-                        if (inlinkTargetFile !== undefined) {
-                           if (
-                              inlinkTargetFile.inlinks?.includes(updatedFile)
-                           ) {
-                              const index =
-                                 inlinkTargetFile.inlinks.indexOf(updatedFile)
-                              if (index !== -1) {
-                                 inlinkTargetFile.inlinks.splice(index, 1)
-                              }
-                           }
-                        }
-                     }
-                  }
+                  indexHyperlinks.refreshInlinks(linksRemoved, "remove")
                }
 
                if (linksAdded.length) {
-                  for (let link of linksAdded) {
-                     if (typeof link === "string") {
-                        let cleanPath =
-                           this.fileSystemUtils.stripAnchorFromLink(link)
-                        let inlinkTargetFile =
-                           await meridianIndexCrud.getMeridianEntry(cleanPath)
-                        if (
-                           inlinkTargetFile !== undefined &&
-                           !inlinkTargetFile.inlinks?.includes(updatedFile)
-                        ) {
-                           inlinkTargetFile.inlinks?.push(updatedFile)
-                        }
-                     }
-                  }
+                  indexHyperlinks.refreshInlinks(linksAdded)
                }
 
+               // Update outlinks array
                await meridianIndexCrud.updateMeridianEntryProperty(
                   LinkTypes.Outlinks,
                   existingEntry.fullPath,
@@ -195,10 +168,27 @@ export class Meridian {
                )
             }
          }
+      } else {
+         // Create a new entry for file
+         const newEntry: IMeridianEntry = {
+            fullPath: updatedFile,
+            title: this.fileSystemUtils.parseFileTitle(updatedFile),
+            categories: reindexedCategories,
+            tags: reindexedTags,
+            outlinks: reindexedOutlinks,
+            inlinks: [],
+         }
+
+         meridianIndexCrud
+            .createNewMeridianEntry(updatedFile, newEntry)
+            .then(
+               () =>
+                  reindexedOutlinks &&
+                  indexHyperlinks.refreshInlinks(reindexedOutlinks)
+            )
       }
    }
 
-   // Add update method to WorkspaceContextUtils to fully replace singleUpdate func
    private determineWorkspaceRoot(): string | undefined {
       return vscode.workspace.workspaceFolders &&
          vscode.workspace.workspaceFolders.length > 0

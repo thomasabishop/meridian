@@ -81,16 +81,6 @@ export class IndexHyperlinks {
       }
    }
 
-   // public clearInlinks(links: string[]) {
-   //    const workspaceContextUtils = new WorkspaceContextUtils(this.context)
-   //    const meridianIndex = await workspaceContextUtils.readFromWorkspaceContext('MERIDIAN')
-   //    for (const link of links) {
-   //       if (this.workspaceFiles.includes(link)) {
-   //          for (const [key, value] of Object.entries())
-   //       }
-   //    }
-   // }
-
    // Check link is well-formed and corresponds to document in workspace
    private sanitiseLink(link: string): string | void {
       let output

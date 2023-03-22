@@ -89,7 +89,7 @@ export async function activate(context: vscode.ExtensionContext) {
                if (fileSystemUtils.fileIsMd(savedFile) && workspaceFiles) {
                   console.log("new save")
                   return await meridian
-                     .reindexWorkspaceFile(savedFile, workspaceFiles)
+                     .indexWorkspaceFile(savedFile, workspaceFiles)
                      .then(() => {
                         categoriesView.refreshIndex()
                         tagsView.refreshIndex()

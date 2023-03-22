@@ -1,4 +1,3 @@
-import { MeridianEntry } from "./MeridianEntry"
 import { ArrayUtils } from "./../utils/ArrayUtils"
 import { IndexHyperlinks } from "./../views/treeviews/hyperlinks-index/IndexHyperlinks"
 import { MeridianIndexCrud } from "./MeridianIndexCrud"
@@ -39,19 +38,8 @@ export class Meridian {
       }
    }
 
-   public async createMeridianIndex(): Promise<void | undefined> {
-      const workspace = await this.indexWorkspace()
-
-      if (workspace !== undefined) {
-         return await this.workspaceContextUtils.writeToWorkspaceContext(
-            "MERIDIAN",
-            workspace
-         )
-      }
-   }
-
    // Index the entire workspace
-   private async indexWorkspace(): Promise<IMeridianIndex | undefined> {
+   public async indexWorkspace(): Promise<void> {
       const allFiles = await this.collateWorkspaceFiles()
       try {
          if (this.arrayUtils.isStringArray(allFiles)) {
@@ -61,7 +49,6 @@ export class Meridian {
             )
 
             let meridianIndex: IMeridianIndex = {}
-
             for (const file of allFiles) {
                let outlinks = await indexHyperlinks.parseFileForLinks(file)
 
@@ -80,11 +67,24 @@ export class Meridian {
                   inlinks: [],
                }
             }
-
-            const collateWorkspaceWithInlinks =
-               indexHyperlinks.collateAllInlinks(meridianIndex)
-
-            return collateWorkspaceWithInlinks
+            this.workspaceContextUtils
+               .writeToWorkspaceContext("MERIDIAN", meridianIndex)
+               .then(async () => {
+                  const index =
+                     await this.workspaceContextUtils.readFromWorkspaceContext(
+                        "MERIDIAN"
+                     )
+                  if (index) {
+                     for (const entry of Object.values(index)) {
+                        if (
+                           entry &&
+                           this.arrayUtils.isStringArray(entry.outlinks)
+                        ) {
+                           indexHyperlinks.refreshInlinks(entry.outlinks)
+                        }
+                     }
+                  }
+               })
          }
       } catch (err) {
          printChannelOutput(`${err}`, true, "error")

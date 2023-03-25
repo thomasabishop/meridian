@@ -96,9 +96,15 @@ export class Meridian {
    }
 
    // Reindex an existing file or add a new single file to the index
-   public async indexWorkspaceFile(updatedFile: string, allFiles: string[]) {
+   public async indexWorkspaceFile(updatedFile: string) {
+      const meridianIndex =
+         await this.workspaceContextUtils.readFromWorkspaceContext("MERIDIAN")
+      const allEntries = meridianIndex && Object.keys(meridianIndex)
       const meridianIndexCrud = new MeridianIndexCrud(this.context)
-      const indexHyperlinks = new IndexHyperlinks(this.context, allFiles)
+
+      const indexHyperlinks =
+         allEntries && new IndexHyperlinks(this.context, allEntries)
+
       const existingEntry = await meridianIndexCrud.getMeridianEntry(
          updatedFile
       )
@@ -113,9 +119,9 @@ export class Meridian {
          MetadataTypes.Tags
       )
 
-      const reindexedOutlinks = await indexHyperlinks.parseFileForLinks(
-         updatedFile
-      )
+      const reindexedOutlinks =
+         indexHyperlinks &&
+         (await indexHyperlinks.parseFileForLinks(updatedFile))
 
       // If entry already exists for workspace file, update properties
       if (existingEntry) {

@@ -82,7 +82,7 @@ export class IndexHyperlinks {
       }
    }
 
-   // Check link is well-formed and corresponds to document in workspace
+   // Check link is well-formed and corresponds to file in workspace
    private sanitiseLink(link: string): string | void {
       let output
       const baselink = this.fileSystemUtils.stripAnchorFromLink(link)

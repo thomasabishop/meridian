@@ -100,6 +100,19 @@ export async function activate(context: vscode.ExtensionContext) {
             }
          )
 
+         const onFileDelete = vscode.workspace.onDidDeleteFiles(
+            async (event) => {
+               if (event.files) {
+                  meridian
+                     .removeEntries(event.files.map((file) => file.path))
+                     .then(() => {
+                        categoriesView.refreshIndex()
+                        tagsView.refreshIndex()
+                     })
+               }
+               return
+            }
+         )
          // Force full reindex of workspace map if file is renamed or moved to different sub-directory
          // TODO: Tech debt: not happy about the inefficiency of this but unable to reindex single file and  have cat and tag tree views update in response.
 
@@ -224,6 +237,7 @@ export async function activate(context: vscode.ExtensionContext) {
          context.subscriptions.push(
             onEditorChange,
             onFileSave,
+            onFileDelete,
             // updateMeridianMapOnFileRename,
             //  updateMeridianMapOnFileDelete,
             scopeCatsCommand,

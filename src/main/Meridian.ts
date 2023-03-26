@@ -96,7 +96,7 @@ export class Meridian {
    }
 
    // Reindex an existing file or add a new single file to the index
-   public async indexWorkspaceFile(updatedFile: string) {
+   public async indexWorkspaceFile(updatedFile: string): Promise<void> {
       const meridianIndex =
          await this.workspaceContextUtils.readFromWorkspaceContext("MERIDIAN")
       const allEntries = meridianIndex && Object.keys(meridianIndex)
@@ -192,6 +192,26 @@ export class Meridian {
                   reindexedOutlinks &&
                   indexHyperlinks.refreshInlinks(reindexedOutlinks)
             )
+      }
+   }
+
+   // When a deletion event occurs, remove references to the deleted entries from the Meridian Index including their metadata
+   public async removeEntries(deletedEntries: string[]): Promise<void> {
+      const meridianIndexCrud = new MeridianIndexCrud(this.context)
+      const meridianIndex =
+         await this.workspaceContextUtils.readFromWorkspaceContext("MERIDIAN")
+      const allEntries = meridianIndex && Object.keys(meridianIndex)
+      const indexHyperlinks =
+         allEntries && new IndexHyperlinks(this.context, allEntries)
+
+      for (const entry of deletedEntries) {
+         const existingEntry = await meridianIndexCrud.getMeridianEntry(entry)
+         if (existingEntry && indexHyperlinks) {
+            if (existingEntry?.outlinks) {
+               indexHyperlinks.refreshInlinks(existingEntry?.outlinks, "remove")
+            }
+            meridianIndexCrud.deleteMeridianEntry(entry)
+         }
       }
    }
 

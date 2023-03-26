@@ -80,7 +80,10 @@ export class Meridian {
                            entry &&
                            this.arrayUtils.isStringArray(entry.outlinks)
                         ) {
-                           indexHyperlinks.refreshInlinks(entry.outlinks)
+                           indexHyperlinks.refreshInlinks(
+                              entry.fullPath,
+                              entry.outlinks
+                           )
                         }
                      }
                   }
@@ -159,11 +162,15 @@ export class Meridian {
                )
 
                if (linksRemoved.length) {
-                  indexHyperlinks.refreshInlinks(linksRemoved, "remove")
+                  indexHyperlinks.refreshInlinks(
+                     updatedFile,
+                     linksRemoved,
+                     "remove"
+                  )
                }
 
                if (linksAdded.length) {
-                  indexHyperlinks.refreshInlinks(linksAdded)
+                  indexHyperlinks.refreshInlinks(updatedFile, linksAdded)
                }
 
                // Update outlinks array
@@ -190,7 +197,7 @@ export class Meridian {
             .then(
                () =>
                   reindexedOutlinks &&
-                  indexHyperlinks.refreshInlinks(reindexedOutlinks)
+                  indexHyperlinks.refreshInlinks(updatedFile, reindexedOutlinks)
             )
       }
    }
@@ -208,7 +215,11 @@ export class Meridian {
          const existingEntry = await meridianIndexCrud.getMeridianEntry(entry)
          if (existingEntry && indexHyperlinks) {
             if (existingEntry?.outlinks) {
-               indexHyperlinks.refreshInlinks(existingEntry?.outlinks, "remove")
+               indexHyperlinks.refreshInlinks(
+                  entry,
+                  existingEntry?.outlinks,
+                  "remove"
+               )
             }
             meridianIndexCrud.deleteMeridianEntry(entry)
          }

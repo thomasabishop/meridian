@@ -34,7 +34,11 @@ export class IndexHyperlinks {
    }
 
    // After initial workspace indexation has been completed, add or remove inlinks based on workspace events.
-   public refreshInlinks(links: unknown[], operation?: string) {
+   public refreshInlinks(
+      sourceLink: string,
+      links: unknown[],
+      operation?: string
+   ) {
       links.map(async (link) => {
          if (typeof link === "string") {
             const cleanPath = this.fileSystemUtils.stripAnchorFromLink(link)
@@ -44,16 +48,16 @@ export class IndexHyperlinks {
             if (targetEntry) {
                // Remove existing inlinks for entry
                if (operation === "remove") {
-                  if (targetEntry?.inlinks?.includes(link)) {
-                     const index = targetEntry.inlinks.indexOf(link)
+                  if (targetEntry?.inlinks?.includes(sourceLink)) {
+                     const index = targetEntry.inlinks.indexOf(sourceLink)
                      if (index !== -1) {
                         targetEntry.inlinks.splice(index, 1)
                      }
                   }
                } else {
                   // Add to existing inlinks for entry
-                  if (!targetEntry?.inlinks?.includes(link)) {
-                     targetEntry?.inlinks?.push(link)
+                  if (!targetEntry?.inlinks?.includes(sourceLink)) {
+                     targetEntry?.inlinks?.push(sourceLink)
                   }
                }
             }

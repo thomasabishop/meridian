@@ -87,7 +87,6 @@ export async function activate(context: vscode.ExtensionContext) {
             async (event) => {
                const savedFile = event.fileName
                if (fileSystemUtils.fileIsMd(savedFile) && workspaceFiles) {
-                  console.log("new save")
                   return await meridian
                      .indexWorkspaceFile(savedFile)
                      .then(() => {

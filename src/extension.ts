@@ -105,8 +105,18 @@ export async function activate(context: vscode.ExtensionContext) {
                   meridian
                      .removeEntries(event.files.map((file) => file.path))
                      .then(() => {
+                        const currentlyActiveFile =
+                           vscode.window.activeTextEditor?.document?.fileName
                         categoriesView.refreshIndex()
                         tagsView.refreshIndex()
+                        outlinksView.refresh(
+                           currentlyActiveFile,
+                           LinkTypes.Outlinks
+                        )
+                        inlinksView.refresh(
+                           currentlyActiveFile,
+                           LinkTypes.Inlinks
+                        )
                      })
                }
                return

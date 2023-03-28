@@ -38,7 +38,7 @@ export class Meridian {
       }
    }
 
-   // Index the entire workspace
+   // Index the entire workspace and create Meridian index
    public async indexWorkspace(): Promise<void> {
       const allFiles = await this.collateWorkspaceFiles()
       try {
@@ -98,7 +98,7 @@ export class Meridian {
       }
    }
 
-   // Reindex an existing file or add a new single file to the index
+   // Reindex an existing file or, if a file is not yet indexed, add it as an entry to the Meridian index
    public async indexWorkspaceFile(updatedFile: string): Promise<void> {
       const meridianIndex =
          await this.workspaceContextUtils.readFromWorkspaceContext("MERIDIAN")
@@ -202,7 +202,7 @@ export class Meridian {
       }
    }
 
-   // When a deletion event occurs, remove references to the deleted entries from the Meridian Index including their metadata
+   // When a deletion or rename event occurs, remove references to these entries and their metadate from the Meridian index
    public async removeEntries(deletedEntries: string[]): Promise<void> {
       const meridianIndexCrud = new MeridianIndexCrud(this.context)
       const meridianIndex =

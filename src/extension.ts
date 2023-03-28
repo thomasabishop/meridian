@@ -1,6 +1,5 @@
 import * as vscode from "vscode"
 import { FileSystemUtils } from "./utils/FileSystemUtils"
-import { WorkspaceContextUtils } from "./utils/WorkspaceContextUtils"
 import { Meridian } from "./main/Meridian"
 import { IndexMetadataProvider } from "./views/treeviews/metadata-index/IndexMetadataProvider"
 import { printChannelOutput } from "./utils/logger"
@@ -14,14 +13,9 @@ export async function activate(context: vscode.ExtensionContext) {
       .indexWorkspace()
       .then(async () => {
          const workspaceFiles = await meridian.collateWorkspaceFiles()
-         const workspaceRoot = meridian.workspaceRoot
          const activeEditor = vscode.window.activeTextEditor?.document.fileName
          const fileSystemUtils = new FileSystemUtils()
-         const workspaceContextUtils = new WorkspaceContextUtils(context)
 
-         const workspaceState =
-            await workspaceContextUtils.readFromWorkspaceContext("MERIDIAN")
-         //         console.log(workspaceState)
          /**
           * Register views
           */
@@ -122,59 +116,36 @@ export async function activate(context: vscode.ExtensionContext) {
                return
             }
          )
-         // Force full reindex of workspace map if file is renamed or moved to different sub-directory
-         // TODO: Tech debt: not happy about the inefficiency of this but unable to reindex single file and  have cat and tag tree views update in response.
 
-         // const updateMeridianMapOnFileRename =
-         //    vscode.workspace.onDidRenameFiles(async (event) => {
-         //       const changedFile = event?.files
-         //       const isMarkdownRename = changedFile.some((uri) =>
-         //          fileSystemUtils.fileIsMd(uri?.newUri.toString())
-         //       )
-
-         //       if (isMarkdownRename) {
-         //          meridian
-         //             .createMeridianIndex()
-         //             .then(() => {
-         //                categoriesView.refreshIndex()
-         //                tagsView.refreshIndex()
-         //             })
-         //             .catch((err) => {
-         //                printChannelOutput(`${err}`, true, "error")
-         //             })
-         //             .finally(() => {
-         //                printChannelOutput(
-         //                   `File ${changedFile[0].oldUri.path} renamed to ${changedFile[0].newUri.path}. Metadata updated.`
-         //                )
-         //             })
-         //       }
-         //    })
-
-         // const updateMeridianMapOnFileDelete =
-         //    vscode.workspace.onDidDeleteFiles(async (event) => {
-         //       if (event.files) {
-         //          await Promise.all(
-         //             event.files.map(async (file) => {
-         //                workspaceContextutils.deleteWorkspaceMapEntry(file.path)
-         //             })
-         //          )
-         //             .then(() => {
-         //                categoriesView.refreshIndex()
-         //                tagsView.refreshIndex()
-         //             })
-         //             .catch((err) => {
-         //                printChannelOutput(`${err}`, true, "error")
-         //             })
-         //             .finally(() => {
-         //                const deletedFiles = event.files.map(
-         //                   (file) => file.path
-         //                )
-         //                printChannelOutput(
-         //                   `Deleted files: ${deletedFiles}. Metadata updated.`
-         //                )
-         //             })
-         //       }
-         //    })
+         const onFileRename = vscode.workspace.onDidRenameFiles(
+            async (event) => {
+               const currentlyActiveFile =
+                  vscode.window.activeTextEditor?.document?.fileName
+               const renamedFiles = event?.files
+               const [oldFileNames, newFileNames] = [
+                  renamedFiles.map(({ oldUri }) => oldUri?.path.toString()),
+                  renamedFiles.map(({ newUri }) => newUri?.path.toString()),
+               ]
+               meridian
+                  .removeEntries(oldFileNames)
+                  .then(() => {
+                     return Promise.all(
+                        newFileNames.map((file) =>
+                           meridian.indexWorkspaceFile(file)
+                        )
+                     )
+                  })
+                  .then(() => {
+                     categoriesView.refreshIndex()
+                     tagsView.refreshIndex()
+                     outlinksView.refresh(
+                        currentlyActiveFile,
+                        LinkTypes.Outlinks
+                     )
+                     inlinksView.refresh(currentlyActiveFile, LinkTypes.Inlinks)
+                  })
+            }
+         )
 
          /**
           * Commands
@@ -247,6 +218,7 @@ export async function activate(context: vscode.ExtensionContext) {
             onEditorChange,
             onFileSave,
             onFileDelete,
+            onFileRename,
             // updateMeridianMapOnFileRename,
             //  updateMeridianMapOnFileDelete,
             scopeCatsCommand,

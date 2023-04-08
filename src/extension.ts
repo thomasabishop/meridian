@@ -7,6 +7,7 @@ import { IndexHyperlinksProvider } from "./views/treeviews/hyperlinks-index/Inde
 import { LinkTypes } from "./views/treeviews/hyperlinks-index/IndexHyperlinks"
 import { MetadataTypes } from "./views/treeviews/metadata-index/IndexMetadata"
 import registerTreeView from "./helpers/registerTreeView"
+import registerCommand, { CommandParams } from "./helpers/registerCommand"
 
 export async function activate(context: vscode.ExtensionContext) {
    const meridian = new Meridian(context)
@@ -45,66 +46,6 @@ export async function activate(context: vscode.ExtensionContext) {
          MetadataTypes.Tags,
          context
       )
-
-      // Register VSCode Commands...
-
-      // Manually reindex categories
-      const reindexCatsCommand: vscode.Disposable =
-         vscode.commands.registerCommand("cats.reindex", () => {
-            printChannelOutput("Categories manually reindexed", false)
-            return categoriesView.refreshIndex()
-         })
-
-      // Manually reindex tags
-      const reindexTagsCommand: vscode.Disposable =
-         vscode.commands.registerCommand("tags.reindex", () => {
-            printChannelOutput("Tags manually reindexed", false)
-            return tagsView.refreshIndex()
-         })
-
-      // Show categories for the current editor only:
-      const scopeCatsCommand: vscode.Disposable =
-         vscode.commands.registerCommand("cats.scope", () => {
-            printChannelOutput("Category filter applied", false)
-            categoriesView.filterMetadataIndexForCurrentFile(
-               MetadataTypes.Categories,
-               vscode.window.activeTextEditor?.document.fileName
-            ),
-               categoriesView.updateTreeviewScopedStatus(
-                  true,
-                  "meridian:scopeCats"
-               )
-         })
-
-      // Show all categories:
-      const scopeCatsResetCommand: vscode.Disposable =
-         vscode.commands.registerCommand("cats.resetScope", () => {
-            categoriesView.updateTreeviewScopedStatus(
-               false,
-               "meridian:scopeCats"
-            )
-            categoriesView.refreshIndex()
-         })
-
-      // Show tags for the current editor only:
-      const scopeTagsCommand: vscode.Disposable =
-         vscode.commands.registerCommand("tags.scope", () => {
-            printChannelOutput("Tag filter applied", false)
-            tagsView.filterMetadataIndexForCurrentFile(
-               MetadataTypes.Tags,
-               vscode.window.activeTextEditor?.document.fileName
-            ),
-               tagsView.updateTreeviewScopedStatus(true, "meridian:scopeTags")
-         })
-
-      // Show all tags:
-      const scopeTagsResetCommand: vscode.Disposable =
-         vscode.commands.registerCommand("tags.resetScope", () => {
-            tagsView.updateTreeviewScopedStatus(false, "meridian:scopeTags")
-            tagsView.refreshIndex()
-         })
-
-      // Handle workspace events
 
       const onEditorChange = vscode.window.onDidChangeActiveTextEditor(
          async (event) => {
@@ -177,17 +118,75 @@ export async function activate(context: vscode.ExtensionContext) {
             })
       })
 
+      // Register VSCode Commands...
+
+      const commands: CommandParams[] = [
+         {
+            id: "cats.reindex",
+            callback: () => categoriesView.refreshIndex(),
+            outputMessage: "Categories manually reindexed",
+         },
+         {
+            id: "tags.reindex",
+            callback: () => tagsView.refreshIndex(),
+            outputMessage: "Tags manually reindexed",
+         },
+         {
+            id: "cats.scope",
+            callback: () => {
+               categoriesView.filterMetadataIndexForCurrentFile(
+                  MetadataTypes.Categories,
+                  vscode.window.activeTextEditor?.document.fileName
+               )
+               categoriesView.updateTreeviewScopedStatus(
+                  true,
+                  "meridian:scopeCats"
+               )
+            },
+            outputMessage: "Category filter applied",
+         },
+         {
+            id: "cats.resetScope",
+            callback: () => {
+               categoriesView.updateTreeviewScopedStatus(
+                  false,
+                  "meridian:scopeCats"
+               )
+               categoriesView.refreshIndex()
+            },
+            outputMessage: "Category filter reset",
+         },
+         {
+            id: "tags.scope",
+            callback: () => {
+               tagsView.filterMetadataIndexForCurrentFile(
+                  MetadataTypes.Tags,
+                  vscode.window.activeTextEditor?.document.fileName
+               )
+               tagsView.updateTreeviewScopedStatus(true, "meridian:scopeTags")
+            },
+            outputMessage: "Tag filter applied",
+         },
+         {
+            id: "tags.resetScope",
+            callback: () => {
+               tagsView.updateTreeviewScopedStatus(false, "meridian:scopeTags")
+               tagsView.refreshIndex()
+            },
+            outputMessage: "Tag filter reset",
+         },
+      ]
+
+      const commandDisposables: vscode.Disposable[] = commands.map((command) =>
+         registerCommand(command, printChannelOutput)
+      )
+
       context.subscriptions.push(
          onEditorChange,
          onFileSave,
          onFileDelete,
          onFileRename,
-         scopeCatsCommand,
-         scopeCatsResetCommand,
-         scopeTagsCommand,
-         scopeTagsResetCommand,
-         reindexCatsCommand,
-         reindexTagsCommand
+         ...commandDisposables
       )
    } catch (err) {
       console.error(err)

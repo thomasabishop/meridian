@@ -122,7 +122,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
       const commands: CommandParams[] = [
          {
-            id: "cats.reindex",
+            id: "categories.reindex",
             callback: () => categoriesView.refreshIndex(),
             outputMessage: "Categories manually reindexed",
          },
@@ -132,7 +132,7 @@ export async function activate(context: vscode.ExtensionContext) {
             outputMessage: "Tags manually reindexed",
          },
          {
-            id: "cats.scope",
+            id: "categories.scope",
             callback: () => {
                categoriesView.filterMetadataIndexForCurrentFile(
                   MetadataTypes.Categories,
@@ -146,7 +146,7 @@ export async function activate(context: vscode.ExtensionContext) {
             outputMessage: "Category filter applied",
          },
          {
-            id: "cats.resetScope",
+            id: "categories.resetScope",
             callback: () => {
                categoriesView.updateTreeviewScopedStatus(
                   false,

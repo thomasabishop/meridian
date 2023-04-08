@@ -70,17 +70,17 @@
       },
       "commands": [
          {
-            "command": "cats.reindex",
+            "command": "categories.reindex",
             "title": "Manually reindex categories",
             "icon": "$(refresh)"
          },
          {
-            "command": "cats.scope",
+            "command": "categories.scope",
             "title": "Show categories for current document only",
             "icon": "$(filter)"
          },
          {
-            "command": "cats.resetScope",
+            "command": "categories.resetScope",
             "title": "Show categories for entire project",
             "icon": "$(filter-filled)"
          },
@@ -103,7 +103,7 @@
       "menus": {
          "view/title": [
             {
-               "command": "cats.reindex",
+               "command": "categories.reindex",
                "when": "view == categories",
                "group": "navigation"
             },
@@ -113,12 +113,12 @@
                "group": "navigation"
             },
             {
-               "command": "cats.scope",
+               "command": "categories.scope",
                "when": "view == categories && !meridian:scopeCats",
                "group": "navigation"
             },
             {
-               "command": "cats.resetScope",
+               "command": "categories.resetScope",
                "when": "view == categories && meridian:scopeCats",
                "group": "navigation"
             },

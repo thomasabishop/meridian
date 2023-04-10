@@ -9,6 +9,11 @@ import { MetadataTypes } from "./views/treeviews/metadata-index/IndexMetadata"
 import registerTreeView from "./helpers/registerTreeView"
 import registerCommand, { CommandParams } from "./helpers/registerCommand"
 
+/**
+ *
+ * @param context
+ */
+
 export async function activate(context: vscode.ExtensionContext) {
    const meridian = new Meridian(context)
 

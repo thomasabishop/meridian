@@ -9,8 +9,8 @@ export class FileSystemUtils {
       return path.extname(file) === ".md"
    }
 
-   public extractFileNameFromFullPath(fullPath: string) {
-      return path.basename(fullPath, "md")
+   public extractFileNameFromFullPath(fullPath: string): string {
+      return path.basename(fullPath, ".md")
    }
    public stripAnchorFromLink(link: string): string {
       return link.includes("#") ? link.split("#")[0] : link

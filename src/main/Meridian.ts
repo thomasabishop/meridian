@@ -10,7 +10,7 @@ import {
    IndexMetadata,
    MetadataTypes,
 } from "../views/treeviews/metadata-index/IndexMetadata"
-import { printChannelOutput } from "../utils/logger"
+import { printChannelOutput } from "../helpers/logger"
 import { LinkTypes } from "./../views/treeviews/hyperlinks-index/IndexHyperlinks"
 export class Meridian {
    public workspaceRoot: string | undefined

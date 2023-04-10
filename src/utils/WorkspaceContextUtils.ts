@@ -1,4 +1,5 @@
 import * as vscode from "vscode"
+import { IMeridianIndex } from "../main/Meridian"
 
 /**
  * Modify the VSCode Workspace state
@@ -13,15 +14,15 @@ export class WorkspaceContextUtils {
 
    public async writeToWorkspaceContext<T>(
       key: string,
-      value: T
+      value: IMeridianIndex
    ): Promise<void> {
       await this.context.workspaceState.update(key, value)
    }
 
    public async readFromWorkspaceContext<T>(
       key: string
-   ): Promise<T | undefined> {
-      return await this.context.workspaceState.get<T>(key)
+   ): Promise<IMeridianIndex | undefined> {
+      return this.context.workspaceState.get<IMeridianIndex>(key)
    }
 
    public async clearWorkspaceContext(key: string): Promise<void> {

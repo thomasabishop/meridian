@@ -8,7 +8,7 @@ export interface CommandParams {
 
 /**
  *  Register VSCode commands and link to functionality contained in @param callback
- *  On execution of @param callbook, log @param outputMessage to VSCode ouput console.
+ *  On execution of @param callback, log @param outputMessage to VSCode ouput console.
  */
 
 export default function (

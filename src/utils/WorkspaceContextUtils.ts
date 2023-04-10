@@ -1,14 +1,15 @@
 import * as vscode from "vscode"
-import { IMeridianIndex, IMeridianEntry } from "../main/Meridian"
+import { IMeridianIndex } from "../main/Meridian"
+
+/**
+ * Modify the VSCode Workspace state
+ */
+
 export class WorkspaceContextUtils {
    private context: vscode.ExtensionContext
    constructor(context: vscode.ExtensionContext) {
       this.context = context
    }
-
-   /**
-    * Methods to modify the VSCode Workspace state
-    */
 
    public async writeToWorkspaceContext(
       key: string,

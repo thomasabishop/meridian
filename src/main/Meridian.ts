@@ -193,7 +193,7 @@ export class Meridian {
          }
 
          meridianIndexCrud
-            .createNewMeridianEntry(updatedFile, newEntry)
+            .createMeridianEntry(updatedFile, newEntry)
             .then(
                () =>
                   reindexedOutlinks &&

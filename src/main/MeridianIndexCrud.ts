@@ -1,8 +1,9 @@
 import * as vscode from "vscode"
 import { IMeridianEntry } from "./Meridian"
 import { WorkspaceContextUtils } from "../utils/WorkspaceContextUtils"
+
 /**
- * Methods to modify the Meridian map object stored in VSCode Workspace state
+ * Crud operations for the Meridian index stored in the VSCode Workspace state
  */
 
 export class MeridianIndexCrud {
@@ -12,28 +13,33 @@ export class MeridianIndexCrud {
       this.workspaceContextUtils = new WorkspaceContextUtils(context)
    }
 
+   private async readWorkspaceIndex(): Promise<
+      Record<string, IMeridianEntry> | undefined
+   > {
+      return await this.workspaceContextUtils.readFromWorkspaceContext(
+         "MERIDIAN"
+      )
+   }
+
+   private async writeWorkspaceIndex(index: Record<string, IMeridianEntry>) {
+      await this.workspaceContextUtils.writeToWorkspaceContext(
+         "MERIDIAN",
+         index
+      )
+   }
+
    public async getMeridianEntry(
       key: string
    ): Promise<IMeridianEntry | undefined> {
-      if (key !== undefined) {
-         const workspaceIndex =
-            await this.workspaceContextUtils.readFromWorkspaceContext(
-               "MERIDIAN"
-            )
-         if (workspaceIndex !== undefined && key in workspaceIndex) {
-            return workspaceIndex[key]
-         }
-      }
+      const workspaceIndex = await this.readWorkspaceIndex()
+      return workspaceIndex?.[key]
    }
 
-   public async createNewMeridianEntry(
-      newKey: string,
-      payload: IMeridianEntry
-   ) {
-      const workspaceIndex =
-         await this.workspaceContextUtils.readFromWorkspaceContext("MERIDIAN")
-      if (workspaceIndex !== undefined) {
+   public async createMeridianEntry(newKey: string, payload: IMeridianEntry) {
+      const workspaceIndex = await this.readWorkspaceIndex()
+      if (workspaceIndex) {
          workspaceIndex[newKey] = payload
+         await this.writeWorkspaceIndex(workspaceIndex)
       }
    }
 
@@ -41,18 +47,18 @@ export class MeridianIndexCrud {
       key: string,
       payload: IMeridianEntry
    ): Promise<void> {
-      const workspaceIndex =
-         await this.workspaceContextUtils.readFromWorkspaceContext("MERIDIAN")
-      if (workspaceIndex !== undefined && key in workspaceIndex) {
+      const workspaceIndex = await this.readWorkspaceIndex()
+      if (workspaceIndex && key in workspaceIndex) {
          workspaceIndex[key] = payload
+         await this.writeWorkspaceIndex(workspaceIndex)
       }
    }
 
    public async deleteMeridianEntry(key: string): Promise<void> {
-      const workspaceIndex =
-         await this.workspaceContextUtils.readFromWorkspaceContext("MERIDIAN")
-      if (workspaceIndex !== undefined && key in workspaceIndex) {
+      const workspaceIndex = await this.readWorkspaceIndex()
+      if (workspaceIndex && key in workspaceIndex) {
          delete workspaceIndex[key]
+         await this.writeWorkspaceIndex(workspaceIndex)
       }
    }
 
@@ -60,12 +66,8 @@ export class MeridianIndexCrud {
       property: keyof IMeridianEntry,
       key: string
    ): Promise<string | string[] | undefined> {
-      if (key !== undefined) {
-         const entry = await this.getMeridianEntry(key)
-         if (entry !== undefined) {
-            return entry[property]
-         }
-      }
+      const entry = await this.getMeridianEntry(key)
+      return entry?.[property]
    }
 
    public async updateMeridianEntryProperty(
@@ -73,11 +75,10 @@ export class MeridianIndexCrud {
       key: string,
       payload: string | string[]
    ): Promise<void> {
-      if (key !== undefined) {
-         const entry = await this.getMeridianEntry(key)
-         if (entry !== undefined) {
-            entry[property] = payload
-         }
+      const entry = await this.getMeridianEntry(key)
+      if (entry) {
+         entry[property] = payload
+         await this.updateMeridianEntry(key, entry)
       }
    }
 }

@@ -5,7 +5,8 @@ import { MetadataTypes } from "../views/treeviews/metadata-index/IndexMetadata"
 import * as vscode from "vscode"
 
 /**
- * Instantiates TreeView (of either Metadata or Link type) and registers it with VSCode, then populates initial TreeView values.
+ * Instantiates TreeView and registers it with VSCode, then populates initial display values.
+ * From class instantiation inherits methods that are subsequently used to alter and update displayed * TreeView value in response to user events.
  */
 
 export default function <

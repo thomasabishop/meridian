@@ -6,6 +6,11 @@ export interface CommandParams {
    outputMessage: string
 }
 
+/**
+ *  Register VSCode commands and link to functionality contained in @param callback
+ *  On execution of @param callbook, log @param outputMessage to VSCode ouput console.
+ */
+
 export default function (
    params: CommandParams,
    printChannelOutput: (message: string, isError: boolean) => void

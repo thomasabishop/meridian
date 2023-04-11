@@ -1,7 +1,10 @@
+// import { FileSystemUtils } from "./../../../utils/FileSystemUtils"
+import { WorkspaceContextUtils } from "./../../../utils/WorkspaceContextUtils"
 import { FileSystemUtils } from "../../../utils/FileSystemUtils"
 import * as vscode from "vscode"
 import IndexHyperlinks from "./IndexHyperlinks"
 import { LinkTypes } from "./IndexHyperlinks"
+import { MeridianIndexCrud } from "../../../main/MeridianIndexCrud"
 /**
  * Create TreeProvider for hyperlink views.
  */
@@ -12,8 +15,9 @@ export class IndexHyperlinksProvider
    public _activeFile: string | undefined
    public context: vscode.ExtensionContext
    public workspaceFiles: string[] | undefined
+   public meridianIndexCrud: MeridianIndexCrud
+   public fileSystemUtils: FileSystemUtils
    private hyperlinks: Promise<TreeItem[] | undefined>
-   private fileSystemUtils: FileSystemUtils
    private _onDidChangeTreeData: vscode.EventEmitter<undefined | null | void> =
       new vscode.EventEmitter<undefined | null | void>()
    readonly onDidChangeTreeData: vscode.Event<undefined | null | void> =
@@ -28,6 +32,7 @@ export class IndexHyperlinksProvider
       this.fileSystemUtils = new FileSystemUtils()
       this.workspaceFiles = workspaceFiles
       this.context = context
+      this.meridianIndexCrud = new MeridianIndexCrud(context)
    }
 
    public get activeFile() {
@@ -42,7 +47,11 @@ export class IndexHyperlinksProvider
       linkType: LinkTypes
    ): Promise<TreeItem[] | undefined> {
       if (this.workspaceFiles !== undefined) {
-         const indexer = new IndexHyperlinks(this.context, this.workspaceFiles)
+         const indexer = new IndexHyperlinks(
+            this.workspaceFiles,
+            this.meridianIndexCrud,
+            this.fileSystemUtils
+         )
          if (typeof this.activeFile === "string") {
             const links = await indexer.getLinks(this.activeFile, linkType)
             if (links !== undefined) {

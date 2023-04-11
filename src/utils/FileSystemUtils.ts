@@ -13,6 +13,7 @@ export class FileSystemUtils {
       return path.basename(fullPath, ".md")
    }
    public stripAnchorFromLink(link: string): string {
+      console.log("stripAnchorFromLink called with link:", link) // Debugging line
       return link.includes("#") ? link.split("#")[0] : link
    }
 }

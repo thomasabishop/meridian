@@ -14,6 +14,7 @@ import { printChannelOutput } from "../helpers/logger"
 import { LinkTypes } from "./../views/treeviews/hyperlinks-index/IndexHyperlinks"
 export class Meridian {
    public workspaceRoot: string | undefined
+   public meridianIndexCrud: MeridianIndexCrud
    private dirsToIgnore: string[] | undefined
    private context: vscode.ExtensionContext
    private workspaceContextUtils: WorkspaceContextUtils
@@ -27,6 +28,7 @@ export class Meridian {
       this.workspaceContextUtils = new WorkspaceContextUtils(context)
       this.fileSystemUtils = new FileSystemUtils()
       this.indexMetadata = new IndexMetadata(context)
+      this.meridianIndexCrud = new MeridianIndexCrud(context)
    }
 
    public async collateWorkspaceFiles(): Promise<string[] | undefined> {
@@ -44,8 +46,10 @@ export class Meridian {
       try {
          if (this.arrayUtils.isStringArray(allFiles)) {
             const indexHyperlinks: IndexHyperlinks = new IndexHyperlinks(
-               this.context,
-               allFiles
+               //   this.context,
+               allFiles,
+               this.meridianIndexCrud,
+               this.fileSystemUtils
             )
 
             let meridianIndex: IMeridianIndex = {}
@@ -106,7 +110,12 @@ export class Meridian {
       const meridianIndexCrud = new MeridianIndexCrud(this.context)
 
       const indexHyperlinks =
-         allEntries && new IndexHyperlinks(this.context, allEntries)
+         allEntries &&
+         new IndexHyperlinks(
+            allEntries,
+            meridianIndexCrud,
+            this.fileSystemUtils
+         )
 
       const existingEntry = await meridianIndexCrud.getMeridianEntry(
          updatedFile
@@ -209,7 +218,12 @@ export class Meridian {
          await this.workspaceContextUtils.readFromWorkspaceContext("MERIDIAN")
       const allEntries = meridianIndex && Object.keys(meridianIndex)
       const indexHyperlinks =
-         allEntries && new IndexHyperlinks(this.context, allEntries)
+         allEntries &&
+         new IndexHyperlinks(
+            allEntries,
+            meridianIndexCrud,
+            this.fileSystemUtils
+         )
 
       for (const entry of deletedEntries) {
          const existingEntry = await meridianIndexCrud.getMeridianEntry(entry)

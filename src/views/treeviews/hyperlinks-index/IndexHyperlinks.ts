@@ -4,6 +4,11 @@ import * as markdownLinkExtractor from "markdown-link-extractor"
 import * as fs from "fs"
 import { MeridianIndexCrud } from "../../../main/MeridianIndexCrud"
 
+export enum LinkTypes {
+   Outlinks = "outlinks",
+   Inlinks = "inlinks",
+}
+
 export interface IIndexHyperlinks {
    parseFileForLinks(file: string): Promise<IMeridianEntry[LinkTypes.Outlinks]>
    refreshInlinks(
@@ -22,9 +27,9 @@ export interface IIndexHyperlinks {
 }
 
 export class IndexHyperlinks implements IIndexHyperlinks {
-   public workspaceFiles: string[]
-   private meridianIndexCrud: MeridianIndexCrud
    private fileSystemUtils: FileSystemUtils
+   private meridianIndexCrud: MeridianIndexCrud
+   public workspaceFiles: string[]
 
    constructor(
       workspaceFiles: string[],
@@ -34,44 +39,6 @@ export class IndexHyperlinks implements IIndexHyperlinks {
       this.workspaceFiles = workspaceFiles
       this.meridianIndexCrud = meridianIndexCrud
       this.fileSystemUtils = fileSystemUtils
-   }
-
-   public async parseFileForLinks(
-      file: string
-   ): Promise<IMeridianEntry[LinkTypes.Outlinks]> {
-      const fileContents = await fs.promises.readFile(file, "utf-8")
-      return this.extractAndSanitiseLinks(fileContents)
-   }
-
-   public refreshInlinks(
-      sourceLink: string,
-      links: unknown[],
-      operation?: string
-   ) {
-      links.forEach(async (link) => {
-         if (typeof link === "string") {
-            await this.updateInlinks(sourceLink, link, operation)
-         }
-      })
-   }
-
-   public async getLinks(
-      activeFile: string,
-      linkType: LinkTypes
-   ): Promise<
-      | IMeridianEntry[LinkTypes.Outlinks]
-      | IMeridianEntry[LinkTypes.Inlinks]
-      | undefined
-   > {
-      if (activeFile !== undefined) {
-         let links = await this.meridianIndexCrud.getMeridianEntryProperty(
-            linkType,
-            activeFile
-         )
-         return Array.isArray(links)
-            ? links.filter((link) => typeof link === "string")
-            : undefined
-      }
    }
 
    private async updateInlinks(
@@ -137,11 +104,44 @@ export class IndexHyperlinks implements IIndexHyperlinks {
          return output
       }
    }
+
+   public async parseFileForLinks(
+      file: string
+   ): Promise<IMeridianEntry[LinkTypes.Outlinks]> {
+      const fileContents = await fs.promises.readFile(file, "utf-8")
+      return this.extractAndSanitiseLinks(fileContents)
+   }
+
+   public refreshInlinks(
+      sourceLink: string,
+      links: unknown[],
+      operation?: string
+   ) {
+      links.forEach(async (link) => {
+         if (typeof link === "string") {
+            await this.updateInlinks(sourceLink, link, operation)
+         }
+      })
+   }
+
+   public async getLinks(
+      activeFile: string,
+      linkType: LinkTypes
+   ): Promise<
+      | IMeridianEntry[LinkTypes.Outlinks]
+      | IMeridianEntry[LinkTypes.Inlinks]
+      | undefined
+   > {
+      if (activeFile !== undefined) {
+         let links = await this.meridianIndexCrud.getMeridianEntryProperty(
+            linkType,
+            activeFile
+         )
+         return Array.isArray(links)
+            ? links.filter((link) => typeof link === "string")
+            : undefined
+      }
+   }
 }
 
 export default IndexHyperlinks
-
-export enum LinkTypes {
-   Outlinks = "outlinks",
-   Inlinks = "inlinks",
-}

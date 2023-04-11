@@ -14,9 +14,9 @@ export class IndexHyperlinksProvider
 {
    public _activeFile: string | undefined
    public context: vscode.ExtensionContext
-   public workspaceFiles: string[] | undefined
-   public meridianIndexCrud: MeridianIndexCrud
-   public fileSystemUtils: FileSystemUtils
+   private workspaceFiles: string[] | undefined
+   private meridianIndexCrud: MeridianIndexCrud
+   private fileSystemUtils: FileSystemUtils
    private hyperlinks: Promise<TreeItem[] | undefined>
    private _onDidChangeTreeData: vscode.EventEmitter<undefined | null | void> =
       new vscode.EventEmitter<undefined | null | void>()

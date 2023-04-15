@@ -1,10 +1,9 @@
-// import { FileSystemUtils } from "./../../../utils/FileSystemUtils"
-import { WorkspaceContextUtils } from "../../../utils/WorkspaceContextUtils"
 import { FileSystemUtils } from "../../../utils/FileSystemUtils"
 import * as vscode from "vscode"
 import IndexHyperlinks from "./IndexHyperlinks"
 import { LinkTypes } from "./IndexHyperlinks"
 import { MeridianIndexCrud } from "../../../utils/MeridianIndexCrud"
+
 /**
  * Create TreeProvider for hyperlink views.
  */
@@ -12,75 +11,80 @@ import { MeridianIndexCrud } from "../../../utils/MeridianIndexCrud"
 export class IndexHyperlinksProvider
    implements vscode.TreeDataProvider<TreeItem>
 {
-   public _activeFile: string | undefined
-   public context: vscode.ExtensionContext
    private workspaceFiles: string[] | undefined
    private meridianIndexCrud: MeridianIndexCrud
    private fileSystemUtils: FileSystemUtils
    private hyperlinks: Promise<TreeItem[] | undefined>
    private _onDidChangeTreeData: vscode.EventEmitter<undefined | null | void> =
       new vscode.EventEmitter<undefined | null | void>()
-   readonly onDidChangeTreeData: vscode.Event<undefined | null | void> =
+   public activeFile: string | undefined
+   public context: vscode.ExtensionContext
+   public readonly onDidChangeTreeData: vscode.Event<undefined | null | void> =
       this._onDidChangeTreeData.event
 
    constructor(
       activeFile: string | undefined,
       workspaceFiles: string[] | undefined,
-      context: vscode.ExtensionContext
+      context: vscode.ExtensionContext,
+      meridianIndexCrud: MeridianIndexCrud,
+      fileSystemUtils: FileSystemUtils
    ) {
-      this._activeFile = activeFile
-      this.fileSystemUtils = new FileSystemUtils()
+      this.activeFile = activeFile
+      this.fileSystemUtils = fileSystemUtils
       this.workspaceFiles = workspaceFiles
       this.context = context
-      this.meridianIndexCrud = new MeridianIndexCrud(context)
+      this.meridianIndexCrud = meridianIndexCrud
    }
 
-   public get activeFile() {
-      return this._activeFile
+   private renderPrettyLink(link: string): string {
+      const anchorText = this.fileSystemUtils.parseFileTitle(link)
+      if (link.includes("#")) {
+         return `${anchorText} > ${link.split("#")[1]}`
+      } else {
+         return anchorText
+      }
    }
 
-   public set activeFile(activeFile: string | undefined) {
-      this._activeFile = activeFile
+   private getIndexedHyperlinks(workspaceFiles: string[]): IndexHyperlinks {
+      return new IndexHyperlinks(
+         workspaceFiles,
+         this.meridianIndexCrud,
+         this.fileSystemUtils
+      )
    }
 
-   public async generateLinks(
+   public async collateLinksForTreeView(
       linkType: LinkTypes
    ): Promise<TreeItem[] | undefined> {
-      if (this.workspaceFiles !== undefined) {
-         const indexer = new IndexHyperlinks(
-            this.workspaceFiles,
-            this.meridianIndexCrud,
-            this.fileSystemUtils
-         )
-         if (typeof this.activeFile === "string") {
-            const links = await indexer.getLinks(this.activeFile, linkType)
-            if (links !== undefined) {
-               return this.transformLinksToTreeItem(links)
-            }
+      if (this.workspaceFiles && this.activeFile) {
+         const links = await this.getIndexedHyperlinks(
+            this.workspaceFiles
+         ).getLinks(this.activeFile, linkType)
+         if (links) {
+            return this.transformLinksToTreeItem(links)
          }
       }
    }
 
    public refresh(activeFile: string | undefined, linkType: LinkTypes) {
       this._onDidChangeTreeData.fire()
-      this._activeFile = activeFile
-      this.hyperlinks = this.generateLinks(linkType)
+      this.activeFile = activeFile
+      this.hyperlinks = this.collateLinksForTreeView(linkType)
    }
 
    public transformLinksToTreeItem(links: string[]): TreeItem[] {
-      links = links.filter((link) => link !== undefined)
-      let transformed: TreeItem[] = []
-      for (const link of links) {
-         const treeItem = new TreeItem(this.renderPrettyLink(link), {
-            command: "vscode.open",
-            title: "",
-            arguments: [link],
+      return links
+         .filter((link) => link)
+         .map((link) => {
+            const treeItem = new TreeItem(this.renderPrettyLink(link), {
+               command: "vscode.open",
+               title: "",
+               arguments: [link],
+            })
+            treeItem.tooltip =
+               this.fileSystemUtils.extractFileNameFromFullPath(link)
+            return treeItem
          })
-         treeItem.tooltip =
-            this.fileSystemUtils.extractFileNameFromFullPath(link)
-         transformed.push(treeItem)
-      }
-      return transformed
    }
 
    public getTreeItem(
@@ -96,15 +100,6 @@ export class IndexHyperlinksProvider
          return this.hyperlinks
       }
       return element.children
-   }
-
-   private renderPrettyLink(link: string) {
-      const anchorText = this.fileSystemUtils.parseFileTitle(link)
-      if (link.includes("#")) {
-         return `${anchorText} > ${link.split("#")[1]}`
-      } else {
-         return anchorText
-      }
    }
 }
 

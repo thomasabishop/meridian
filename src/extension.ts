@@ -1,3 +1,4 @@
+import { MeridianIndexCrud } from "./utils/MeridianIndexCrud"
 import * as vscode from "vscode"
 import { FileSystemUtils } from "./utils/FileSystemUtils"
 import { Meridian } from "./Meridian"
@@ -10,13 +11,14 @@ import registerTreeView from "./helpers/registerTreeView"
 import registerCommand, { ICommandParams } from "./helpers/registerCommand"
 
 export async function activate(context: vscode.ExtensionContext) {
-   const meridian = new Meridian(context)
-
    try {
+      const meridian = new Meridian(context)
+      const meridianIndexCrud = new MeridianIndexCrud(context)
+      const fileSystemUtils = new FileSystemUtils()
+
       await meridian.indexWorkspace()
       const workspaceFiles = await meridian.collateWorkspaceFiles()
       const activeEditor = vscode.window.activeTextEditor?.document.fileName
-      const fileSystemUtils = new FileSystemUtils()
 
       // Register VSCode TreeViews...
 
@@ -25,7 +27,9 @@ export async function activate(context: vscode.ExtensionContext) {
          LinkTypes.Outlinks,
          activeEditor,
          workspaceFiles,
-         context
+         context,
+         meridianIndexCrud,
+         fileSystemUtils
       )
 
       const inlinksView = registerTreeView(
@@ -33,7 +37,9 @@ export async function activate(context: vscode.ExtensionContext) {
          LinkTypes.Inlinks,
          activeEditor,
          workspaceFiles,
-         context
+         context,
+         meridianIndexCrud,
+         fileSystemUtils
       )
 
       const categoriesView = registerTreeView(

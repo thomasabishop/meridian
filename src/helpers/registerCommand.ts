@@ -1,6 +1,6 @@
 import * as vscode from "vscode"
 
-export interface CommandParams {
+export interface ICommandParams {
    id: string
    callback: () => void
    outputMessage: string
@@ -12,7 +12,7 @@ export interface CommandParams {
  */
 
 export default function (
-   params: CommandParams,
+   params: ICommandParams,
    printChannelOutput: (message: string, isError: boolean) => void
 ): vscode.Disposable {
    return vscode.commands.registerCommand(params.id, () => {

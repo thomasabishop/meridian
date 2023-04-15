@@ -2,7 +2,7 @@ import { WorkspaceContextUtils } from "./../../../utils/WorkspaceContextUtils"
 import IMetadataMap, { IndexMetadata, MetadataTypes } from "./IndexMetadata"
 import * as vscode from "vscode"
 import * as lodash from "lodash"
-import { MeridianIndexCrud } from "../../../main/MeridianIndexCrud"
+import { MeridianIndexCrud } from "../../../utils/MeridianIndexCrud"
 
 /**
  * Extends the default VS Code TreeDataProvider.

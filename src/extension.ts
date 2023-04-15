@@ -1,18 +1,13 @@
 import * as vscode from "vscode"
 import { FileSystemUtils } from "./utils/FileSystemUtils"
-import { Meridian } from "./main/Meridian"
-import { IndexMetadataProvider } from "./views/treeviews/metadata-index/IndexMetadataProvider"
+import { Meridian } from "./Meridian"
+import { IndexMetadataProvider } from "./views/treeviews/metadata/IndexMetadataProvider"
 import { printChannelOutput } from "./helpers/logger"
-import { IndexHyperlinksProvider } from "./views/treeviews/hyperlinks-index/IndexHyperlinksProvider"
-import { LinkTypes } from "./views/treeviews/hyperlinks-index/IndexHyperlinks"
-import { MetadataTypes } from "./views/treeviews/metadata-index/IndexMetadata"
+import { IndexHyperlinksProvider } from "./views/treeviews/hyperlinks/IndexHyperlinksProvider"
+import { LinkTypes } from "./views/treeviews/hyperlinks/IndexHyperlinks"
+import { MetadataTypes } from "./views/treeviews/metadata/IndexMetadata"
 import registerTreeView from "./helpers/registerTreeView"
-import registerCommand, { CommandParams } from "./helpers/registerCommand"
-
-/**
- *
- * @param context
- */
+import registerCommand, { ICommandParams } from "./helpers/registerCommand"
 
 export async function activate(context: vscode.ExtensionContext) {
    const meridian = new Meridian(context)
@@ -24,6 +19,7 @@ export async function activate(context: vscode.ExtensionContext) {
       const fileSystemUtils = new FileSystemUtils()
 
       // Register VSCode TreeViews...
+
       const outlinksView = registerTreeView(
          IndexHyperlinksProvider,
          LinkTypes.Outlinks,
@@ -125,7 +121,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
       // Register VSCode Commands...
 
-      const commands: CommandParams[] = [
+      const commands: ICommandParams[] = [
          {
             id: "categories.reindex",
             callback: () => categoriesView.refreshIndex(),

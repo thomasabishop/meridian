@@ -1,5 +1,5 @@
 import * as vscode from "vscode"
-import { IMeridianIndex } from "../main/Meridian"
+import { IMeridianIndex } from "../Meridian"
 
 /**
  * Modify the VSCode Workspace state

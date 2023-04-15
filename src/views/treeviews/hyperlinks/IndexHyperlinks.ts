@@ -1,8 +1,8 @@
-import { IMeridianEntry, IMeridianIndex } from "../../../main/Meridian"
-import { FileSystemUtils } from "./../../../utils/FileSystemUtils"
+import { IMeridianEntry, IMeridianIndex } from "../../../Meridian"
+import { FileSystemUtils } from "../../../utils/FileSystemUtils"
 import * as markdownLinkExtractor from "markdown-link-extractor"
 import * as fs from "fs"
-import { MeridianIndexCrud } from "../../../main/MeridianIndexCrud"
+import { MeridianIndexCrud } from "../../../utils/MeridianIndexCrud"
 
 export enum LinkTypes {
    Outlinks = "outlinks",

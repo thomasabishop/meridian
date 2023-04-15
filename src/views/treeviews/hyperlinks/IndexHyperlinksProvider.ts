@@ -1,10 +1,10 @@
 // import { FileSystemUtils } from "./../../../utils/FileSystemUtils"
-import { WorkspaceContextUtils } from "./../../../utils/WorkspaceContextUtils"
+import { WorkspaceContextUtils } from "../../../utils/WorkspaceContextUtils"
 import { FileSystemUtils } from "../../../utils/FileSystemUtils"
 import * as vscode from "vscode"
 import IndexHyperlinks from "./IndexHyperlinks"
 import { LinkTypes } from "./IndexHyperlinks"
-import { MeridianIndexCrud } from "../../../main/MeridianIndexCrud"
+import { MeridianIndexCrud } from "../../../utils/MeridianIndexCrud"
 /**
  * Create TreeProvider for hyperlink views.
  */

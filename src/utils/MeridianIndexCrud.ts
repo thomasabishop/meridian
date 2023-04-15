@@ -1,9 +1,9 @@
 import * as vscode from "vscode"
-import { IMeridianEntry } from "./Meridian"
-import { WorkspaceContextUtils } from "../utils/WorkspaceContextUtils"
+import { IMeridianEntry } from "../Meridian"
+import { WorkspaceContextUtils } from "./WorkspaceContextUtils"
 
 /**
- * Crud operations for the Meridian index stored in the VSCode Workspace state
+ * CRUD operations for the Meridian index stored in the VSCode Workspace state
  */
 
 export class MeridianIndexCrud {

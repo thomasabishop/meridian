@@ -1,17 +1,20 @@
-import { ArrayUtils } from "./../utils/ArrayUtils"
-import { IndexHyperlinks } from "./../views/treeviews/hyperlinks-index/IndexHyperlinks"
-import { MeridianIndexCrud } from "./MeridianIndexCrud"
-import { WorkspaceContextUtils } from "../utils/WorkspaceContextUtils"
+import { ArrayUtils } from "./utils/ArrayUtils"
+import { IndexHyperlinks } from "./views/treeviews/hyperlinks/IndexHyperlinks"
+import { MeridianIndexCrud } from "./utils/MeridianIndexCrud"
+import { WorkspaceContextUtils } from "./utils/WorkspaceContextUtils"
 import * as path from "path"
 import * as vscode from "vscode"
 import * as readDirRecurse from "recursive-readdir"
-import { FileSystemUtils } from "../utils/FileSystemUtils"
+import { FileSystemUtils } from "./utils/FileSystemUtils"
+
 import {
    IndexMetadata,
    MetadataTypes,
-} from "../views/treeviews/metadata-index/IndexMetadata"
-import { printChannelOutput } from "../helpers/logger"
-import { LinkTypes } from "./../views/treeviews/hyperlinks-index/IndexHyperlinks"
+} from "./views/treeviews/metadata/IndexMetadata"
+
+import { printChannelOutput } from "./helpers/logger"
+import { LinkTypes } from "./views/treeviews/hyperlinks/IndexHyperlinks"
+
 export class Meridian {
    public workspaceRoot: string | undefined
    public meridianIndexCrud: MeridianIndexCrud

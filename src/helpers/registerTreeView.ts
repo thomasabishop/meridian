@@ -1,12 +1,11 @@
-import { IndexMetadataProvider } from "../views/treeviews/metadata-index/IndexMetadataProvider"
-import { IndexHyperlinksProvider } from "../views/treeviews/hyperlinks-index/IndexHyperlinksProvider"
-import { LinkTypes } from "../views/treeviews/hyperlinks-index/IndexHyperlinks"
-import { MetadataTypes } from "../views/treeviews/metadata-index/IndexMetadata"
+import { IndexMetadataProvider } from "../views/treeviews/metadata/IndexMetadataProvider"
+import { IndexHyperlinksProvider } from "../views/treeviews/hyperlinks/IndexHyperlinksProvider"
+import { LinkTypes } from "../views/treeviews/hyperlinks/IndexHyperlinks"
+import { MetadataTypes } from "../views/treeviews/metadata/IndexMetadata"
 import * as vscode from "vscode"
 
 /**
- * Instantiates TreeView and registers it with VSCode, then populates initial display values.
- * From class instantiation inherits methods that are subsequently used to alter and update displayed * TreeView value in response to user events.
+ * Instantiates VSCode TreeView and populates initial display values.
  */
 
 export default function <

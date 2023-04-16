@@ -1,4 +1,3 @@
-import { WorkspaceContextUtils } from "./../../../utils/WorkspaceContextUtils"
 import IMetadataMap, { IndexMetadata, MetadataTypes } from "./IndexMetadata"
 import * as vscode from "vscode"
 import * as lodash from "lodash"
@@ -38,13 +37,8 @@ export class IndexMetadataProvider
       return element
    }
 
-   public getChildren(
-      element?: TreeItem | undefined
-   ): vscode.ProviderResult<TreeItem[]> {
-      if (element === undefined) {
-         return this.metadataIndex
-      }
-      return element.children
+   public getChildren(element?: TreeItem): vscode.ProviderResult<TreeItem[]> {
+      return element === undefined ? this.metadataIndex : element.children
    }
 
    // Repopulate index for metadata type
@@ -56,34 +50,36 @@ export class IndexMetadataProvider
    private async generateMetadataIndex(): Promise<TreeItem[] | undefined> {
       const indexer = new IndexMetadata(this.context)
       const data = await indexer.collateAllMetadataOfType(this.metadataType)
-      if (data !== undefined && typeof data !== "string") {
-         return this.transformMetadataToTreeItem(data)
-      }
+      return data && typeof data !== "string"
+         ? this.transformMetadataToTreeItem(data)
+         : undefined
    }
 
    // Return segment of metadata scoped to the currently active editor:
    public async filterMetadataIndexForCurrentFile(
-      metadataType: MetadataTypes, // categories or tags
-      activeFile: string | undefined
+      metadataType: MetadataTypes,
+      activeFile?: string
    ): Promise<void> {
-      const workspaceContextUtils = new WorkspaceContextUtils(this.context)
-      if (activeFile !== undefined && metadataType !== undefined) {
-         const metadataForFile =
-            await this.meridianIndexCrud.getMeridianEntryProperty(
-               metadataType,
-               activeFile
-            )
+      if (!activeFile || !metadataType) return
 
+      const metadataForFile =
+         await this.meridianIndexCrud.getMeridianEntryProperty(
+            metadataType,
+            activeFile
+         )
+
+      if (Array.isArray(metadataForFile)) {
          const index = await this.metadataIndex
-         const filtered = index?.filter((treeItem: TreeItem) =>
-            metadataForFile?.includes(treeItem.label as string)
+         const filtered = index?.filter((treeItem) =>
+            typeof treeItem.label === "string"
+               ? metadataForFile.includes(treeItem.label)
+               : false
          )
 
          if (filtered?.length) {
             this.metadataIndex = filtered
             this._onDidChangeTreeData.fire()
          }
-         return
       }
    }
 
@@ -95,29 +91,28 @@ export class IndexMetadataProvider
    private transformMetadataToTreeItem(
       metadataIndex: IMetadataMap[]
    ): TreeItem[] {
-      let transformed: TreeItem[]
-
       const populateTreeItemChildren = (fileRefs: IMetadataMap["files"]) =>
-         fileRefs
-            .filter((fileRef) => fileRef.fileTitle !== undefined)
-            .map(
-               (fileRef: { filePath: string; fileTitle?: string }) =>
-                  new TreeItem(fileRef!.fileTitle as string, undefined, {
+         fileRefs.reduce<TreeItem[]>((acc, fileRef) => {
+            const { filePath, fileTitle } = fileRef
+            if (fileTitle) {
+               acc.push(
+                  new TreeItem(fileTitle, undefined, {
                      command: "vscode.open",
                      title: "",
-                     arguments: [vscode.Uri.file(fileRef.filePath)],
+                     arguments: [vscode.Uri.file(filePath)],
                   })
-            )
+               )
+            }
+            return acc
+         }, [])
 
-      transformed = metadataIndex.map(
-         (datum: IMetadataMap) =>
-            new TreeItem(datum.token, [
-               ...populateTreeItemChildren(datum.files),
-            ])
+      const transformed = metadataIndex.map(
+         ({ token, files }) =>
+            new TreeItem(token, populateTreeItemChildren(files))
       )
+
       // Sort alphabetically
-      transformed = lodash.orderBy(transformed, ["label"], ["asc"])
-      return [...transformed]
+      return lodash.orderBy(transformed, ["label"], ["asc"])
    }
 }
 

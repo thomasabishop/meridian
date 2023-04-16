@@ -31,6 +31,33 @@ export class IndexMetadataProvider
       this.meridianIndexCrud = new MeridianIndexCrud(workspaceContext)
    }
 
+   private transformMetadataToTreeItem(
+      metadataIndex: IMetadataMap[]
+   ): TreeItem[] {
+      const populateTreeItemChildren = (fileRefs: IMetadataMap["files"]) =>
+         fileRefs.reduce<TreeItem[]>((acc, fileRef) => {
+            const { filePath, fileTitle } = fileRef
+            if (fileTitle) {
+               acc.push(
+                  new TreeItem(fileTitle, undefined, {
+                     command: "vscode.open",
+                     title: "",
+                     arguments: [vscode.Uri.file(filePath)],
+                  })
+               )
+            }
+            return acc
+         }, [])
+
+      const transformed = metadataIndex.map(
+         ({ token, files }) =>
+            new TreeItem(token, populateTreeItemChildren(files))
+      )
+
+      // Sort alphabetically
+      return lodash.orderBy(transformed, ["label"], ["asc"])
+   }
+
    public getTreeItem(
       element: TreeItem
    ): vscode.TreeItem | Thenable<vscode.TreeItem> {
@@ -86,33 +113,6 @@ export class IndexMetadataProvider
    // Toggle a value in context to mark whether the given Metadata view is scoped to the current file:
    public updateTreeviewScopedStatus(isScoped: boolean, contextToggle: string) {
       vscode.commands.executeCommand("setContext", contextToggle, isScoped)
-   }
-
-   private transformMetadataToTreeItem(
-      metadataIndex: IMetadataMap[]
-   ): TreeItem[] {
-      const populateTreeItemChildren = (fileRefs: IMetadataMap["files"]) =>
-         fileRefs.reduce<TreeItem[]>((acc, fileRef) => {
-            const { filePath, fileTitle } = fileRef
-            if (fileTitle) {
-               acc.push(
-                  new TreeItem(fileTitle, undefined, {
-                     command: "vscode.open",
-                     title: "",
-                     arguments: [vscode.Uri.file(filePath)],
-                  })
-               )
-            }
-            return acc
-         }, [])
-
-      const transformed = metadataIndex.map(
-         ({ token, files }) =>
-            new TreeItem(token, populateTreeItemChildren(files))
-      )
-
-      // Sort alphabetically
-      return lodash.orderBy(transformed, ["label"], ["asc"])
    }
 }
 

@@ -96,10 +96,7 @@ export class IndexHyperlinksProvider
    public getChildren(
       element?: TreeItem | undefined
    ): vscode.ProviderResult<TreeItem[]> {
-      if (element === undefined) {
-         return this.hyperlinks
-      }
-      return element.children
+      return element === undefined ? this.hyperlinks : element.children
    }
 }
 

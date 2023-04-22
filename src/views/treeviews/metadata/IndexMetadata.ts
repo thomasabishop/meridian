@@ -31,26 +31,26 @@ export class IndexMetadata {
 
    private updateMetadataMap(
       metadataMap: IMetadatumIndex[],
-      instance: string,
-      key: string,
-      value: Pick<IMeridianEntry, "title" | "categories" | "tags">
-   ) {
-      const existingEntry = metadataMap.find((x) => x.token === instance)
+      token: string,
+      filePath: string,
+      file: Pick<IMeridianEntry, "title" | "categories" | "tags">
+   ): void {
+      const existingEntry = metadataMap.find((x) => x.token === token)
 
       if (!existingEntry) {
          metadataMap.push({
-            token: instance,
+            token: token,
             files: [
                {
-                  filePath: key,
-                  fileTitle: value?.title,
+                  filePath: filePath,
+                  fileTitle: file?.title,
                },
             ],
          })
       } else {
          existingEntry.files.push({
-            filePath: key,
-            fileTitle: value?.title,
+            filePath: filePath,
+            fileTitle: file?.title,
          })
       }
    }
@@ -76,8 +76,8 @@ export class IndexMetadata {
             }
 
             if (type !== undefined) {
-               for (const instance of type) {
-                  this.updateMetadataMap(metadataMap, instance, key, value)
+               for (const token of type) {
+                  this.updateMetadataMap(metadataMap, token, key, value)
                }
             }
          }

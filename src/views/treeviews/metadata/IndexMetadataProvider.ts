@@ -69,7 +69,7 @@ export class IndexMetadataProvider
    }
 
    // Repopulate index for metadata type
-   public refreshIndex(): void {
+   public refresh(): void {
       this.metadataIndex = this.generateMetadataIndex()
       this._onDidChangeTreeData.fire()
    }

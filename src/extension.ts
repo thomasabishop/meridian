@@ -77,8 +77,8 @@ export async function activate(context: vscode.ExtensionContext) {
             const savedFile = event.fileName
             if (fileSystemUtils.fileIsMd(savedFile) && workspaceFiles) {
                return await meridian.indexWorkspaceFile(savedFile).then(() => {
-                  categoriesView.refreshIndex()
-                  tagsView.refreshIndex()
+                  categoriesView.refresh()
+                  tagsView.refresh()
                   outlinksView.refresh(savedFile, LinkTypes.Outlinks)
                   inlinksView.refresh(savedFile, LinkTypes.Inlinks)
                })
@@ -93,8 +93,8 @@ export async function activate(context: vscode.ExtensionContext) {
                .then(() => {
                   const currentlyActiveFile =
                      vscode.window.activeTextEditor?.document?.fileName
-                  categoriesView.refreshIndex()
-                  tagsView.refreshIndex()
+                  categoriesView.refresh()
+                  tagsView.refresh()
                   outlinksView.refresh(currentlyActiveFile, LinkTypes.Outlinks)
                   inlinksView.refresh(currentlyActiveFile, LinkTypes.Inlinks)
                })
@@ -118,8 +118,8 @@ export async function activate(context: vscode.ExtensionContext) {
                )
             })
             .then(() => {
-               categoriesView.refreshIndex()
-               tagsView.refreshIndex()
+               categoriesView.refresh()
+               tagsView.refresh()
                outlinksView.refresh(currentlyActiveFile, LinkTypes.Outlinks)
                inlinksView.refresh(currentlyActiveFile, LinkTypes.Inlinks)
             })
@@ -130,12 +130,12 @@ export async function activate(context: vscode.ExtensionContext) {
       const commands: ICommandParams[] = [
          {
             id: "categories.reindex",
-            callback: () => categoriesView.refreshIndex(),
+            callback: () => categoriesView.refresh(),
             outputMessage: "Categories manually reindexed",
          },
          {
             id: "tags.reindex",
-            callback: () => tagsView.refreshIndex(),
+            callback: () => tagsView.refresh(),
             outputMessage: "Tags manually reindexed",
          },
          {
@@ -159,7 +159,7 @@ export async function activate(context: vscode.ExtensionContext) {
                   false,
                   "meridian:scopeCats"
                )
-               categoriesView.refreshIndex()
+               categoriesView.refresh()
             },
             outputMessage: "Category filter reset",
          },
@@ -178,7 +178,7 @@ export async function activate(context: vscode.ExtensionContext) {
             id: "tags.resetScope",
             callback: () => {
                tagsView.updateTreeviewScopedStatus(false, "meridian:scopeTags")
-               tagsView.refreshIndex()
+               tagsView.refresh()
             },
             outputMessage: "Tag filter reset",
          },

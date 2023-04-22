@@ -23,7 +23,7 @@ export default function <
          type as LinkTypes
       )
    } else if (view instanceof IndexMetadataProvider) {
-      view.refreshIndex()
+      view.refresh()
    }
    vscode.window.registerTreeDataProvider(type, view)
    return view

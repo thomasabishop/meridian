@@ -46,11 +46,7 @@ export class IndexHyperlinksProvider
    }
 
    private getIndexedHyperlinks(workspaceFiles: string[]): IndexHyperlinks {
-      return new IndexHyperlinks(
-         workspaceFiles,
-         this.meridianIndexCrud,
-         this.fileSystemUtils
-      )
+      return new IndexHyperlinks(workspaceFiles, this.meridianIndexCrud)
    }
 
    public async collateLinksForTreeView(

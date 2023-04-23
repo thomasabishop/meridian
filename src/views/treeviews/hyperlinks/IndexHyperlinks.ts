@@ -29,18 +29,12 @@ export enum LinkTypes {
 // }
 
 export class IndexHyperlinks {
-   private fileSystemUtils: FileSystemUtils
    private meridianIndexCrud: MeridianIndexCrud
    public workspaceFiles: string[]
 
-   constructor(
-      workspaceFiles: string[],
-      meridianIndexCrud: MeridianIndexCrud,
-      fileSystemUtils: FileSystemUtils
-   ) {
+   constructor(workspaceFiles: string[], meridianIndexCrud: MeridianIndexCrud) {
       this.workspaceFiles = workspaceFiles
       this.meridianIndexCrud = meridianIndexCrud
-      this.fileSystemUtils = fileSystemUtils
    }
 
    /**
@@ -57,7 +51,7 @@ export class IndexHyperlinks {
       link: string,
       operation?: string
    ): Promise<void> {
-      const cleanPath = this.fileSystemUtils.stripAnchorFromLink(link)
+      const cleanPath = this.stripAnchorFromLink(link)
       const targetEntry = await this.meridianIndexCrud.getMeridianEntry(
          cleanPath
       )
@@ -121,7 +115,7 @@ export class IndexHyperlinks {
     */
 
    private returnValidLink(link: string): string | undefined {
-      const baselink = this.fileSystemUtils.stripAnchorFromLink(link)
+      const baselink = this.stripAnchorFromLink(link)
       const baseLinkExistsInWorkspace = this.workspaceFiles.filter((file) =>
          file.includes(baselink)
       )
@@ -153,6 +147,10 @@ export class IndexHyperlinks {
          }
          return cleanLinks
       }, [])
+   }
+
+   private stripAnchorFromLink(link: string): string {
+      return link.includes("#") ? link.split("#")[0] : link
    }
 
    /**

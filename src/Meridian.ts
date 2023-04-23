@@ -57,7 +57,7 @@ export class Meridian {
 
             let meridianIndex: IMeridianIndex = {}
             for (const file of allFiles) {
-               let outlinks = await indexHyperlinks.parseFileForLinks(file)
+               let outlinks = await indexHyperlinks.processLinks(file)
 
                meridianIndex[file] = {
                   fullPath: file,
@@ -135,8 +135,7 @@ export class Meridian {
       )
 
       const reindexedOutlinks =
-         indexHyperlinks &&
-         (await indexHyperlinks.parseFileForLinks(updatedFile))
+         indexHyperlinks && (await indexHyperlinks.processLinks(updatedFile))
 
       // If entry already exists for workspace file, update properties
       if (existingEntry) {

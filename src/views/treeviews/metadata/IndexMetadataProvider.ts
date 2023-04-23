@@ -31,6 +31,9 @@ export class IndexMetadataProvider
       this.meridianIndexCrud = new MeridianIndexCrud(workspaceContext)
    }
 
+   /**
+    * Take array of metadata tokens and their corresponding files, convert to VSCode TreeView
+    */
    private transformMetadataToTreeItem(
       metadataIndex: IMetadataMap[]
    ): TreeItem[] {
@@ -68,7 +71,7 @@ export class IndexMetadataProvider
       return element === undefined ? this.metadataIndex : element.children
    }
 
-   // Repopulate index for metadata type
+   // Repopulate metadata index
    public refresh(): void {
       this.metadataIndex = this.generateMetadataIndex()
       this._onDidChangeTreeData.fire()

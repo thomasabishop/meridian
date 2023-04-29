@@ -9,25 +9,6 @@ export enum LinkTypes {
    Inlinks = "inlinks",
 }
 
-//TODO: Maybe reactivate the interface, when I come to add unit tests. It's not really adding much at the moment
-
-// export interface IIndexHyperlinks {
-//    parseFileForLinks(file: string): Promise<IMeridianEntry[LinkTypes.Outlinks]>
-//    refreshInlinks(
-//       sourceLink: string,
-//       links: unknown[],
-//       operation?: string
-//    ): void
-//    getLinks(
-//       activeFile: string,
-//       linkType: LinkTypes
-//    ): Promise<
-//       | IMeridianEntry[LinkTypes.Outlinks]
-//       | IMeridianEntry[LinkTypes.Inlinks]
-//       | undefined
-//    >
-// }
-
 export class IndexHyperlinks {
    private meridianIndexCrud: MeridianIndexCrud
    public workspaceFiles: string[]

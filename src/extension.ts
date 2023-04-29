@@ -5,20 +5,46 @@ import { Meridian } from "./Meridian"
 import { IndexMetadataProvider } from "./views/treeviews/metadata/IndexMetadataProvider"
 import { printChannelOutput } from "./helpers/logger"
 import { IndexHyperlinksProvider } from "./views/treeviews/hyperlinks/IndexHyperlinksProvider"
-import { LinkTypes } from "./views/treeviews/hyperlinks/IndexHyperlinks"
-import { MetadataTypes } from "./views/treeviews/metadata/IndexMetadata"
+import IndexHyperlinks, {
+   LinkTypes,
+} from "./views/treeviews/hyperlinks/IndexHyperlinks"
+import {
+   IndexMetadata,
+   MetadataTypes,
+} from "./views/treeviews/metadata/IndexMetadata"
 import registerTreeView from "./helpers/registerTreeView"
 import registerCommand, { ICommandParams } from "./helpers/registerCommand"
+import { WorkspaceContextUtils } from "./utils/WorkspaceContextUtils"
+import { ArrayUtils } from "./utils/ArrayUtils"
 
 export async function activate(context: vscode.ExtensionContext) {
    try {
-      const meridian = new Meridian(context)
+      const workspaceContextUtils = new WorkspaceContextUtils(context)
       const meridianIndexCrud = new MeridianIndexCrud(context)
       const fileSystemUtils = new FileSystemUtils()
+      const arrayUtils = new ArrayUtils()
+      const indexMetadata = new IndexMetadata(context)
+
+      const activeEditor = vscode.window.activeTextEditor?.document.fileName
+      const workspaceFiles =
+         (await fileSystemUtils.collateWorkspaceFiles()) ?? []
+
+      const indexHyperlinks = new IndexHyperlinks(
+         workspaceFiles,
+         meridianIndexCrud
+      )
+
+      const meridian = new Meridian(
+         context,
+         workspaceFiles,
+         workspaceContextUtils,
+         indexHyperlinks,
+         indexMetadata,
+         fileSystemUtils,
+         arrayUtils
+      )
 
       await meridian.indexWorkspace()
-      const workspaceFiles = await meridian.collateWorkspaceFiles()
-      const activeEditor = vscode.window.activeTextEditor?.document.fileName
 
       // Register VSCode TreeViews...
 

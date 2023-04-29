@@ -2,9 +2,7 @@ import { ArrayUtils } from "./utils/ArrayUtils"
 import { IndexHyperlinks } from "./views/treeviews/hyperlinks/IndexHyperlinks"
 import { MeridianIndexCrud } from "./utils/MeridianIndexCrud"
 import { WorkspaceContextUtils } from "./utils/WorkspaceContextUtils"
-import * as path from "path"
 import * as vscode from "vscode"
-import * as readDirRecurse from "recursive-readdir"
 import { FileSystemUtils } from "./utils/FileSystemUtils"
 
 import {
@@ -16,92 +14,80 @@ import { printChannelOutput } from "./helpers/logger"
 import { LinkTypes } from "./views/treeviews/hyperlinks/IndexHyperlinks"
 
 export class Meridian {
-   public workspaceRoot: string | undefined
-   public meridianIndexCrud: MeridianIndexCrud
-   private dirsToIgnore: string[] | undefined
    private context: vscode.ExtensionContext
+   private workspaceFiles: string[]
    private workspaceContextUtils: WorkspaceContextUtils
-   private fileSystemUtils: FileSystemUtils
+   private indexHyperlinks: IndexHyperlinks
    private indexMetadata: IndexMetadata
-   private arrayUtils: ArrayUtils = new ArrayUtils()
-   constructor(context: vscode.ExtensionContext) {
+   private fileSystemUtils: FileSystemUtils
+   private arrayUtils: ArrayUtils
+
+   constructor(
+      context: vscode.ExtensionContext,
+      workspaceFiles: string[],
+      workspaceContextUtils: WorkspaceContextUtils,
+      indexHyperlinks: IndexHyperlinks,
+      indexMetadata: IndexMetadata,
+      fileSystemUtils: FileSystemUtils,
+      arrayUtils: ArrayUtils
+   ) {
       this.context = context
-      this.workspaceRoot = this.determineWorkspaceRoot()
-      this.dirsToIgnore = this.retrieveDirsToIgnore(".git")
-      this.workspaceContextUtils = new WorkspaceContextUtils(context)
-      this.fileSystemUtils = new FileSystemUtils()
-      this.indexMetadata = new IndexMetadata(context)
-      this.meridianIndexCrud = new MeridianIndexCrud(context)
+      this.workspaceFiles = workspaceFiles
+      this.workspaceContextUtils = workspaceContextUtils
+      this.indexHyperlinks = indexHyperlinks
+      this.indexMetadata = indexMetadata
+      this.fileSystemUtils = fileSystemUtils
+      this.arrayUtils = arrayUtils
    }
 
-   public async collateWorkspaceFiles(): Promise<string[] | undefined> {
-      if (typeof this.workspaceRoot === "string") {
-         return await readDirRecurse(
-            path.resolve(this.workspaceRoot),
-            this.dirsToIgnore
-         )
-      }
-   }
-
-   // Index the entire workspace and create Meridian index
    public async indexWorkspace(): Promise<void> {
-      const allFiles = await this.collateWorkspaceFiles()
       try {
-         if (this.arrayUtils.isStringArray(allFiles)) {
-            const indexHyperlinks: IndexHyperlinks = new IndexHyperlinks(
-               //   this.context,
-               allFiles,
-               this.meridianIndexCrud,
-               this.fileSystemUtils
-            )
+         let meridianIndex: IMeridianIndex = {}
+         for (const file of this.workspaceFiles) {
+            let outlinks = await this.indexHyperlinks.processLinks(file)
 
-            let meridianIndex: IMeridianIndex = {}
-            for (const file of allFiles) {
-               let outlinks = await indexHyperlinks.processLinks(file)
-
-               meridianIndex[file] = {
-                  fullPath: file,
-                  title: this.fileSystemUtils.parseFileTitle(file),
-                  categories: await this.indexMetadata.extractMetadataForFile(
-                     file,
-                     MetadataTypes.Categories
-                  ),
-                  tags: await this.indexMetadata.extractMetadataForFile(
-                     file,
-                     MetadataTypes.Tags
-                  ),
-                  outlinks: [...new Set(outlinks)],
-                  inlinks: [],
-               }
+            meridianIndex[file] = {
+               fullPath: file,
+               title: this.fileSystemUtils.parseFileTitle(file),
+               categories: await this.indexMetadata.extractMetadataForFile(
+                  file,
+                  MetadataTypes.Categories
+               ),
+               tags: await this.indexMetadata.extractMetadataForFile(
+                  file,
+                  MetadataTypes.Tags
+               ),
+               outlinks: [...new Set(outlinks)],
+               inlinks: [],
             }
-            this.workspaceContextUtils
-               .writeToWorkspaceContext("MERIDIAN", meridianIndex)
-               .then(async () => {
-                  const index =
-                     await this.workspaceContextUtils.readFromWorkspaceContext(
-                        "MERIDIAN"
-                     )
-                  if (index) {
-                     for (const entry of Object.values(index)) {
-                        if (
-                           entry &&
-                           this.arrayUtils.isStringArray(entry.outlinks)
-                        ) {
-                           indexHyperlinks.refreshInlinks(
-                              entry.fullPath,
-                              entry.outlinks
-                           )
-                        }
+         }
+         this.workspaceContextUtils
+            .writeToWorkspaceContext("MERIDIAN", meridianIndex)
+            .then(async () => {
+               const index =
+                  await this.workspaceContextUtils.readFromWorkspaceContext(
+                     "MERIDIAN"
+                  )
+               if (index) {
+                  for (const entry of Object.values(index)) {
+                     if (
+                        entry &&
+                        this.arrayUtils.isStringArray(entry.outlinks)
+                     ) {
+                        this.indexHyperlinks.refreshInlinks(
+                           entry.fullPath,
+                           entry.outlinks
+                        )
                      }
                   }
-               })
-         }
+               }
+            })
       } catch (err) {
          printChannelOutput(`${err}`, true, "error")
-      } finally {
-         if (allFiles !== undefined) {
-            printChannelOutput(`${allFiles.length} files indexed`, false)
-         }
+         // } finally {
+         //    if (allFiles !== undefined) {
+         //       printChannelOutput(`${allFiles.length} files indexed`, false)
+         //    }
       }
    }
 
@@ -113,12 +99,7 @@ export class Meridian {
       const meridianIndexCrud = new MeridianIndexCrud(this.context)
 
       const indexHyperlinks =
-         allEntries &&
-         new IndexHyperlinks(
-            allEntries,
-            meridianIndexCrud,
-            this.fileSystemUtils
-         )
+         allEntries && new IndexHyperlinks(allEntries, meridianIndexCrud)
 
       const existingEntry = await meridianIndexCrud.getMeridianEntry(
          updatedFile
@@ -220,12 +201,7 @@ export class Meridian {
          await this.workspaceContextUtils.readFromWorkspaceContext("MERIDIAN")
       const allEntries = meridianIndex && Object.keys(meridianIndex)
       const indexHyperlinks =
-         allEntries &&
-         new IndexHyperlinks(
-            allEntries,
-            meridianIndexCrud,
-            this.fileSystemUtils
-         )
+         allEntries && new IndexHyperlinks(allEntries, meridianIndexCrud)
 
       for (const entry of deletedEntries) {
          const existingEntry = await meridianIndexCrud.getMeridianEntry(entry)
@@ -239,29 +215,6 @@ export class Meridian {
             }
             meridianIndexCrud.deleteMeridianEntry(entry)
          }
-      }
-   }
-
-   private determineWorkspaceRoot(): string | undefined {
-      return vscode.workspace.workspaceFolders &&
-         vscode.workspace.workspaceFolders.length > 0
-         ? vscode.workspace.workspaceFolders[0].uri.fsPath
-         : undefined
-   }
-
-   private retrieveDirsToIgnore(inp: string) {
-      const ignoreDirs = vscode.workspace
-         .getConfiguration("meridian")
-         .get("dirsToIgnore") as string[]
-      if (!ignoreDirs?.length) {
-         return
-      }
-      if (ignoreDirs !== undefined) {
-         printChannelOutput(
-            `Meridian is ignoring the directories: ${ignoreDirs}`,
-            false
-         )
-         return [inp, ...ignoreDirs]
       }
    }
 }

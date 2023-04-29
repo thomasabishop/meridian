@@ -35,7 +35,7 @@ export class MeridianIndexCrud {
       return workspaceIndex?.[key]
    }
 
-   public async createMeridianEntry(newKey: string, payload: IMeridianEntry) {
+   public async addMeridianEntry(newKey: string, payload: IMeridianEntry) {
       const workspaceIndex = await this.readWorkspaceIndex()
       if (workspaceIndex) {
          workspaceIndex[newKey] = payload

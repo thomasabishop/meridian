@@ -41,7 +41,8 @@ export async function activate(context: vscode.ExtensionContext) {
          indexHyperlinks,
          indexMetadata,
          fileSystemUtils,
-         arrayUtils
+         arrayUtils,
+         meridianIndexCrud
       )
 
       await meridian.indexWorkspace()

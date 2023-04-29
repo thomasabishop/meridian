@@ -21,7 +21,7 @@ export class Meridian {
    private indexMetadata: IndexMetadata
    private fileSystemUtils: FileSystemUtils
    private arrayUtils: ArrayUtils
-
+   private meridianIndexCrud: MeridianIndexCrud
    constructor(
       context: vscode.ExtensionContext,
       workspaceFiles: string[],
@@ -29,7 +29,8 @@ export class Meridian {
       indexHyperlinks: IndexHyperlinks,
       indexMetadata: IndexMetadata,
       fileSystemUtils: FileSystemUtils,
-      arrayUtils: ArrayUtils
+      arrayUtils: ArrayUtils,
+      meridianIndexCrud: MeridianIndexCrud
    ) {
       this.context = context
       this.workspaceFiles = workspaceFiles
@@ -38,60 +39,57 @@ export class Meridian {
       this.indexMetadata = indexMetadata
       this.fileSystemUtils = fileSystemUtils
       this.arrayUtils = arrayUtils
+      this.meridianIndexCrud = meridianIndexCrud
    }
 
-   public async indexWorkspace(): Promise<void> {
-      try {
-         let meridianIndex: IMeridianIndex = {}
-         for (const file of this.workspaceFiles) {
-            let outlinks = await this.indexHyperlinks.processLinks(file)
+   /**
+    * Creates a new Meridian entry (IMeridianEntry)
+    * @param file - The file path to create the Meridian entry for.
+    * @returns A Promise that resolves to a Meridian entry object.
+    */
 
-            meridianIndex[file] = {
-               fullPath: file,
-               title: this.fileSystemUtils.parseFileTitle(file),
-               categories: await this.indexMetadata.extractMetadataForFile(
-                  file,
-                  MetadataTypes.Categories
-               ),
-               tags: await this.indexMetadata.extractMetadataForFile(
-                  file,
-                  MetadataTypes.Tags
-               ),
-               outlinks: [...new Set(outlinks)],
-               inlinks: [],
-            }
+   private async createMeridianEntry(file: string): Promise<IMeridianEntry> {
+      const outlinks = await this.indexHyperlinks.processLinks(file)
+
+      return {
+         fullPath: file,
+         title: this.fileSystemUtils.parseFileTitle(file),
+         categories: await this.indexMetadata.extractMetadataForFile(
+            file,
+            MetadataTypes.Categories
+         ),
+         tags: await this.indexMetadata.extractMetadataForFile(
+            file,
+            MetadataTypes.Tags
+         ),
+         outlinks: [...new Set(outlinks)],
+         inlinks: [],
+      }
+   }
+
+   /**
+    * Indexes the entire workspace by creating Meridian entries for each file. Once entry created, inlinks array for the entry is then populated, using outlink data
+    * @returns A Promise that resolves when all viable workspace files have been indexed.
+    */
+
+   public async indexWorkspace(): Promise<void> {
+      const populateEntries = this.workspaceFiles.map(async (file) => {
+         const entry = await this.createMeridianEntry(file)
+         return { file, entry }
+      })
+
+      const entries = await Promise.all(populateEntries)
+
+      for (const { file, entry } of entries) {
+         await this.meridianIndexCrud.addMeridianEntry(file, entry)
+         if (this.arrayUtils.isStringArray(entry.outlinks)) {
+            this.indexHyperlinks.refreshInlinks(entry.fullPath, entry.outlinks)
          }
-         this.workspaceContextUtils
-            .writeToWorkspaceContext("MERIDIAN", meridianIndex)
-            .then(async () => {
-               const index =
-                  await this.workspaceContextUtils.readFromWorkspaceContext(
-                     "MERIDIAN"
-                  )
-               if (index) {
-                  for (const entry of Object.values(index)) {
-                     if (
-                        entry &&
-                        this.arrayUtils.isStringArray(entry.outlinks)
-                     ) {
-                        this.indexHyperlinks.refreshInlinks(
-                           entry.fullPath,
-                           entry.outlinks
-                        )
-                     }
-                  }
-               }
-            })
-      } catch (err) {
-         printChannelOutput(`${err}`, true, "error")
-         // } finally {
-         //    if (allFiles !== undefined) {
-         //       printChannelOutput(`${allFiles.length} files indexed`, false)
-         //    }
       }
    }
 
    // Reindex an existing file or, if a file is not yet indexed, add it as an entry to the Meridian index
+
    public async indexWorkspaceFile(updatedFile: string): Promise<void> {
       const meridianIndex =
          await this.workspaceContextUtils.readFromWorkspaceContext("MERIDIAN")
@@ -185,7 +183,7 @@ export class Meridian {
          }
 
          meridianIndexCrud
-            .createMeridianEntry(updatedFile, newEntry)
+            .addMeridianEntry(updatedFile, newEntry)
             .then(
                () =>
                   reindexedOutlinks &&

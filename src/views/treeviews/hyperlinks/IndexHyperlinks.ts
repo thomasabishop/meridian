@@ -159,12 +159,13 @@ export class IndexHyperlinks {
       sourceLink: string,
       links: unknown[],
       operation?: string
-   ) {
-      links.forEach(async (link) => {
+   ): Promise<void[]> {
+      const updateInlinksPromises = links.map(async (link) => {
          if (typeof link === "string") {
             await this.updateInlinks(sourceLink, link, operation)
          }
       })
+      return Promise.all(updateInlinksPromises)
    }
 
    /**

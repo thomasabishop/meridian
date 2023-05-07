@@ -5,13 +5,8 @@ import { Meridian } from "./Meridian"
 import { IndexMetadataProvider } from "./views/treeviews/metadata/IndexMetadataProvider"
 import { printChannelOutput } from "./helpers/logger"
 import { IndexHyperlinksProvider } from "./views/treeviews/hyperlinks/IndexHyperlinksProvider"
-import IndexHyperlinks, {
-   LinkTypes,
-} from "./views/treeviews/hyperlinks/IndexHyperlinks"
-import {
-   IndexMetadata,
-   MetadataTypes,
-} from "./views/treeviews/metadata/IndexMetadata"
+import IndexHyperlinks, { LinkTypes } from "./views/treeviews/hyperlinks/IndexHyperlinks"
+import { IndexMetadata, MetadataTypes } from "./views/treeviews/metadata/IndexMetadata"
 import registerTreeView from "./helpers/registerTreeView"
 import registerCommand, { ICommandParams } from "./helpers/registerCommand"
 import { WorkspaceContextUtils } from "./utils/WorkspaceContextUtils"
@@ -26,16 +21,11 @@ export async function activate(context: vscode.ExtensionContext) {
       const indexMetadata = new IndexMetadata(context)
 
       const activeEditor = vscode.window.activeTextEditor?.document.fileName
-      const workspaceFiles =
-         (await fileSystemUtils.collateWorkspaceFiles()) ?? []
+      const workspaceFiles = (await fileSystemUtils.collateWorkspaceFiles()) ?? []
 
-      const indexHyperlinks = new IndexHyperlinks(
-         workspaceFiles,
-         meridianIndexCrud
-      )
+      const indexHyperlinks = new IndexHyperlinks(workspaceFiles, meridianIndexCrud)
 
       const meridian = new Meridian(
-         context,
          workspaceFiles,
          workspaceContextUtils,
          indexHyperlinks,
@@ -45,7 +35,7 @@ export async function activate(context: vscode.ExtensionContext) {
          meridianIndexCrud
       )
 
-      await meridian.indexWorkspace()
+      await meridian.init()
 
       // Register VSCode TreeViews...
 
@@ -81,57 +71,50 @@ export async function activate(context: vscode.ExtensionContext) {
          context
       )
 
-      const onEditorChange = vscode.window.onDidChangeActiveTextEditor(
-         async (event) => {
-            let currentlyActiveFile = event?.document.fileName
-            if (currentlyActiveFile !== undefined) {
-               if (fileSystemUtils.fileIsMd(currentlyActiveFile)) {
-                  // Refresh inlinks:
-                  inlinksView.refresh(currentlyActiveFile, LinkTypes.Inlinks)
-                  // Refresh outlinks:
-                  outlinksView.refresh(currentlyActiveFile, LinkTypes.Outlinks)
-                  // Log event
-                  printChannelOutput(
-                     `Editor changed: refreshed inlinks/outlinks for file ${event?.document.fileName}`
-                  )
-               }
+      const onEditorChange = vscode.window.onDidChangeActiveTextEditor(async (event) => {
+         let currentlyActiveFile = event?.document.fileName
+         if (currentlyActiveFile !== undefined) {
+            if (fileSystemUtils.fileIsMd(currentlyActiveFile)) {
+               // Refresh inlinks:
+               inlinksView.refresh(currentlyActiveFile, LinkTypes.Inlinks)
+               // Refresh outlinks:
+               outlinksView.refresh(currentlyActiveFile, LinkTypes.Outlinks)
+               // Log event
+               printChannelOutput(
+                  `Editor changed: refreshed inlinks/outlinks for file ${event?.document.fileName}`
+               )
             }
          }
-      )
+      })
 
-      const onFileSave = vscode.workspace.onDidSaveTextDocument(
-         async (event) => {
-            const savedFile = event.fileName
-            if (fileSystemUtils.fileIsMd(savedFile) && workspaceFiles) {
-               return await meridian.indexWorkspaceFile(savedFile).then(() => {
-                  categoriesView.refresh()
-                  tagsView.refresh()
-                  outlinksView.refresh(savedFile, LinkTypes.Outlinks)
-                  inlinksView.refresh(savedFile, LinkTypes.Inlinks)
-               })
-            }
+      const onFileSave = vscode.workspace.onDidSaveTextDocument(async (event) => {
+         const savedFile = event.fileName
+         if (fileSystemUtils.fileIsMd(savedFile) && workspaceFiles) {
+            return await meridian.indexWorkspaceFile(savedFile).then(() => {
+               categoriesView.refresh()
+               tagsView.refresh()
+               outlinksView.refresh(savedFile, LinkTypes.Outlinks)
+               inlinksView.refresh(savedFile, LinkTypes.Inlinks)
+            })
          }
-      )
+      })
 
       const onFileDelete = vscode.workspace.onDidDeleteFiles(async (event) => {
          if (event.files) {
-            meridian
-               .removeEntries(event.files.map((file) => file.path))
-               .then(() => {
-                  const currentlyActiveFile =
-                     vscode.window.activeTextEditor?.document?.fileName
-                  categoriesView.refresh()
-                  tagsView.refresh()
-                  outlinksView.refresh(currentlyActiveFile, LinkTypes.Outlinks)
-                  inlinksView.refresh(currentlyActiveFile, LinkTypes.Inlinks)
-               })
+            meridian.removeEntries(event.files.map((file) => file.path)).then(() => {
+               const currentlyActiveFile =
+                  vscode.window.activeTextEditor?.document?.fileName
+               categoriesView.refresh()
+               tagsView.refresh()
+               outlinksView.refresh(currentlyActiveFile, LinkTypes.Outlinks)
+               inlinksView.refresh(currentlyActiveFile, LinkTypes.Inlinks)
+            })
          }
          return
       })
 
       const onFileRename = vscode.workspace.onDidRenameFiles(async (event) => {
-         const currentlyActiveFile =
-            vscode.window.activeTextEditor?.document?.fileName
+         const currentlyActiveFile = vscode.window.activeTextEditor?.document?.fileName
          const renamedFiles = event?.files
          const [oldFileNames, newFileNames] = [
             renamedFiles.map(({ oldUri }) => oldUri?.path.toString()),
@@ -172,20 +155,14 @@ export async function activate(context: vscode.ExtensionContext) {
                   MetadataTypes.Categories,
                   vscode.window.activeTextEditor?.document.fileName
                )
-               categoriesView.updateTreeviewScopedStatus(
-                  true,
-                  "meridian:scopeCats"
-               )
+               categoriesView.updateTreeviewScopedStatus(true, "meridian:scopeCats")
             },
             outputMessage: "Category filter applied",
          },
          {
             id: "categories.resetScope",
             callback: () => {
-               categoriesView.updateTreeviewScopedStatus(
-                  false,
-                  "meridian:scopeCats"
-               )
+               categoriesView.updateTreeviewScopedStatus(false, "meridian:scopeCats")
                categoriesView.refresh()
             },
             outputMessage: "Category filter reset",

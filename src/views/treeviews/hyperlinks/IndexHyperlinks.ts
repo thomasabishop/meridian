@@ -24,7 +24,7 @@ export class IndexHyperlinks {
     *
     * @param sourceLink - The source link from which the inlink originates.
     * @param link - The target link to which the inlink points.
-    * @param operation - Optional string parameter specifying the operation to perform: "remove" to remove the inlink, if no value specified: add the inlink.
+    * @param operation - Optional parameter specifying the operation to perform: `'remove'` to remove the inlink, else add the inlink.
     */
 
    private async updateInlinks(
@@ -33,9 +33,7 @@ export class IndexHyperlinks {
       operation?: string
    ): Promise<void> {
       const cleanPath = this.stripAnchorFromLink(link)
-      const targetEntry = await this.meridianIndexCrud.getMeridianEntry(
-         cleanPath
-      )
+      const targetEntry = await this.meridianIndexCrud.getMeridianEntry(cleanPath)
       if (targetEntry) {
          if (operation === "remove") {
             this.removeInlink(sourceLink, targetEntry)
@@ -104,8 +102,7 @@ export class IndexHyperlinks {
       if (baseLinkExistsInWorkspace.length) {
          let output = baseLinkExistsInWorkspace[0]
          if (link.includes("#")) {
-            output =
-               baseLinkExistsInWorkspace[0] + "#" + link.match(/#(.*)/)![1]
+            output = baseLinkExistsInWorkspace[0] + "#" + link.match(/#(.*)/)![1]
          }
          return output
       }
@@ -117,9 +114,7 @@ export class IndexHyperlinks {
     * @returns Array of valid links
     */
 
-   private returnValidLinks(
-      fileContents: string
-   ): IMeridianEntry[LinkTypes.Outlinks] {
+   private returnValidLinks(fileContents: string): IMeridianEntry[LinkTypes.Outlinks] {
       const links = this.extractRawLinks(fileContents)
       return links.reduce((cleanLinks: string[], link: string) => {
          const cleanLink = this.returnValidLink(link)
@@ -140,9 +135,7 @@ export class IndexHyperlinks {
     * @returns Array of valid links
     */
 
-   public async processLinks(
-      file: string
-   ): Promise<IMeridianEntry[LinkTypes.Outlinks]> {
+   public async processLinks(file: string): Promise<IMeridianEntry[LinkTypes.Outlinks]> {
       const fileContents = await fs.promises.readFile(file, "utf-8")
       return this.returnValidLinks(fileContents)
    }
@@ -178,9 +171,7 @@ export class IndexHyperlinks {
       activeFile: string,
       linkType: LinkTypes
    ): Promise<
-      | IMeridianEntry[LinkTypes.Outlinks]
-      | IMeridianEntry[LinkTypes.Inlinks]
-      | undefined
+      IMeridianEntry[LinkTypes.Outlinks] | IMeridianEntry[LinkTypes.Inlinks] | undefined
    > {
       if (activeFile !== undefined) {
          let links = await this.meridianIndexCrud.getMeridianEntryProperty(

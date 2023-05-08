@@ -8,9 +8,7 @@ import { MeridianIndexCrud } from "../../../utils/MeridianIndexCrud"
  * Create TreeProvider for hyperlink views.
  */
 
-export class IndexHyperlinksProvider
-   implements vscode.TreeDataProvider<TreeItem>
-{
+export class IndexHyperlinksProvider implements vscode.TreeDataProvider<TreeItem> {
    private workspaceFiles: string[] | undefined
    private meridianIndexCrud: MeridianIndexCrud
    private fileSystemUtils: FileSystemUtils
@@ -55,7 +53,7 @@ export class IndexHyperlinksProvider
       if (this.workspaceFiles && this.activeFile) {
          const links = await this.getIndexedHyperlinks(
             this.workspaceFiles
-         ).getLinks(this.activeFile, linkType)
+         ).getLinksForFile(this.activeFile, linkType)
          if (links) {
             return this.transformLinksToTreeItem(links)
          }
@@ -77,21 +75,16 @@ export class IndexHyperlinksProvider
                title: "",
                arguments: [link],
             })
-            treeItem.tooltip =
-               this.fileSystemUtils.extractFileNameFromFullPath(link)
+            treeItem.tooltip = this.fileSystemUtils.extractFileNameFromFullPath(link)
             return treeItem
          })
    }
 
-   public getTreeItem(
-      element: TreeItem
-   ): vscode.TreeItem | Thenable<vscode.TreeItem> {
+   public getTreeItem(element: TreeItem): vscode.TreeItem | Thenable<vscode.TreeItem> {
       return element
    }
 
-   public getChildren(
-      element?: TreeItem | undefined
-   ): vscode.ProviderResult<TreeItem[]> {
+   public getChildren(element?: TreeItem | undefined): vscode.ProviderResult<TreeItem[]> {
       return element === undefined ? this.hyperlinks : element.children
    }
 }

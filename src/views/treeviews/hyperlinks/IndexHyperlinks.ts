@@ -1,5 +1,4 @@
-import { IMeridianEntry, IMeridianIndex } from "../../../Meridian"
-import { FileSystemUtils } from "../../../utils/FileSystemUtils"
+import { IMeridianEntry } from "../../../Meridian"
 import * as markdownLinkExtractor from "markdown-link-extractor"
 import * as fs from "fs"
 import { MeridianIndexCrud } from "../../../utils/MeridianIndexCrud"
@@ -27,7 +26,7 @@ export class IndexHyperlinks {
     * @param operation - Optional parameter specifying the operation to perform: `'remove'` to remove the inlink, else add the inlink.
     */
 
-   private async updateInlinks(
+   private async updateInlink(
       sourceLink: string,
       link: string,
       operation?: string
@@ -90,7 +89,7 @@ export class IndexHyperlinks {
    /**
     * Check if local markdown link exists in the current workspace
     * @param link - The link to check for
-    * @returns The full URL if link is valid, else undefined
+    * @returns The full URL if link is valid,
     */
 
    private returnValidLink(link: string): string | undefined {
@@ -109,9 +108,10 @@ export class IndexHyperlinks {
    }
 
    /**
-    * For each link in array returned by @method extractRawLinks, check if valid using @method returnValidLink
-    * @param fileContents
-    * @returns Array of valid links
+    * Returns valid outlinks from a given Markdown file.
+    *
+    * @param fileContents - A string containing the content of a Markdown file.
+    * @returns An array of valid outlinks (strings) found in the file contents.
     */
 
    private returnValidLinks(fileContents: string): IMeridianEntry[LinkTypes.Outlinks] {
@@ -130,8 +130,8 @@ export class IndexHyperlinks {
    }
 
    /**
-    * Read contents of markdown file, extract links, parse those that are valid
-    * @param file - A markdown file in the workspace
+    * Read contents of markdown file, extract links, return those that are valid and indexable by Meridian
+    * @param file - Path of a  markdown file in the workspace
     * @returns Array of valid links
     */
 
@@ -141,10 +141,10 @@ export class IndexHyperlinks {
    }
 
    /**
-    * Repopulate inlink array in response to user and editor events.
+    * Repopulate inlink array in response to user actions.
     * For example, if a workspace file is deleted, remove it as an inlink for other files in the index
-    * @param sourceLink - A resource in workspace that has undergone change (rename, delete, save etc.)
-    * @param links - Links to which @param sourceLink is an inlink
+    * @param sourceLink - An  entry in workspace that has undergone change (rename, delete, save etc.)
+    * @param links - An array of the entries that the sourceLink linked/links to
     * @param operation? - Delete or update the changed resource
     */
 
@@ -155,19 +155,19 @@ export class IndexHyperlinks {
    ): Promise<void[]> {
       const updateInlinksPromises = links.map(async (link) => {
          if (typeof link === "string") {
-            await this.updateInlinks(sourceLink, link, operation)
+            await this.updateInlink(sourceLink, link, operation)
          }
       })
       return Promise.all(updateInlinksPromises)
    }
 
    /**
-    * Return inlinks or outlinks for a given file in the workspace
+    * Return inlinks or outlinks for a given entry in the Meridian Index
     * @param activeFile - File to return links for
     * @param linkType - One of enum LinkTypes
     */
 
-   public async getLinks(
+   public async getLinksForFile(
       activeFile: string,
       linkType: LinkTypes
    ): Promise<

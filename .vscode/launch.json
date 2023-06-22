@@ -14,7 +14,7 @@
          "preLaunchTask": "",
          "skipFiles": ["<node_internals>/**", "**/extensionHostProcess.js"],
          "resolveSourceMapLocations": [
-            "${workspaceFolder}/",
+            //            "${workspaceFolder}/",
             "!/node_modules/**"
          ]
       }

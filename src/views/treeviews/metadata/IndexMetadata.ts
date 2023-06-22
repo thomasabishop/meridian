@@ -1,7 +1,7 @@
 import * as fs from "fs"
 import * as yamlFrontMatter from "yaml-front-matter"
 import * as vscode from "vscode"
-import { WorkspaceContextUtils } from "./../../../utils/WorkspaceContextUtils"
+import { WorkspaceContextUtils } from "../../../utils/WorkspaceContextUtils"
 import { IMeridianEntry, IMeridianIndex } from "../../../Meridian"
 
 /**
@@ -55,9 +55,7 @@ export class IndexMetadata {
       }
    }
 
-   public async collateAllMetadataOfType(
-      metadataType: MetadataTypes
-   ): Promise<IMetadatumIndex[]> {
+   public async collateAllMetadataOfType(metadataType: MetadataTypes): Promise<IMetadatumIndex[]> {
       const meridianIndex: IMeridianIndex | undefined =
          await this.workspaceContextUtils.readFromWorkspaceContext("MERIDIAN")
       let metadataMap: IMetadatumIndex[] = []

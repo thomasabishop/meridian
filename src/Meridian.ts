@@ -68,9 +68,7 @@ export class Meridian {
 
       outlinks = outlinks || [...new Set(await this.indexHyperlinks.processLinks(file))]
 
-      tags =
-         tags ||
-         (await this.indexMetadata.extractMetadataForFile(file, MetadataTypes.Tags))
+      tags = tags || (await this.indexMetadata.extractMetadataForFile(file, MetadataTypes.Tags))
 
       return {
          fullPath: file,
@@ -98,9 +96,7 @@ export class Meridian {
       newPropertyValues: string[] | undefined,
       fullPath: string
    ): Promise<void> {
-      if (
-         this.arrayUtils.changesExist(oldPropertyValues ?? [], newPropertyValues ?? [])
-      ) {
+      if (this.arrayUtils.changesExist(oldPropertyValues ?? [], newPropertyValues ?? [])) {
          await this.meridianIndexCrud.updateMeridianEntryProperty(
             type,
             fullPath,
@@ -134,12 +130,7 @@ export class Meridian {
          reindexedCategories,
          fullPath
       )
-      await this.updateExistingEntryProperty(
-         MetadataTypes.Tags,
-         tags,
-         reindexedTags,
-         fullPath
-      )
+      await this.updateExistingEntryProperty(MetadataTypes.Tags, tags, reindexedTags, fullPath)
 
       // Update entries that maintain links to the updated existing entry...
       if (this.arrayUtils.changesExist(outlinks ?? [], reindexedOutlinks ?? [])) {
@@ -147,10 +138,7 @@ export class Meridian {
             outlinks ?? [],
             reindexedOutlinks ?? []
          )
-         const linksAdded = this.arrayUtils.elementsAdded(
-            outlinks ?? [],
-            reindexedOutlinks ?? []
-         )
+         const linksAdded = this.arrayUtils.elementsAdded(outlinks ?? [], reindexedOutlinks ?? [])
 
          if (linksRemoved.length) {
             this.indexHyperlinks.refreshInlinks(fullPath, linksRemoved, "remove")
@@ -214,18 +202,14 @@ export class Meridian {
     */
 
    public async indexWorkspaceFile(updatedFile: string): Promise<void> {
-      const meridianIndex = await this.workspaceContextUtils.readFromWorkspaceContext(
-         "MERIDIAN"
-      )
+      const meridianIndex = await this.workspaceContextUtils.readFromWorkspaceContext("MERIDIAN")
       const allEntries = meridianIndex && Object.keys(meridianIndex)
       const existingEntry = await this.meridianIndexCrud.getMeridianEntry(updatedFile)
 
       const [reindexedCategories, reindexedTags, reindexedOutlinks] = await Promise.all([
          this.indexMetadata.extractMetadataForFile(updatedFile, MetadataTypes.Categories),
          this.indexMetadata.extractMetadataForFile(updatedFile, MetadataTypes.Tags),
-         allEntries
-            ? this.indexHyperlinks.processLinks(updatedFile)
-            : Promise.resolve(undefined),
+         allEntries ? this.indexHyperlinks.processLinks(updatedFile) : Promise.resolve(undefined),
       ])
 
       await (existingEntry

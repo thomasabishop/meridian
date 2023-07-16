@@ -5,6 +5,7 @@ import { WorkspaceContextUtils } from "./utils/WorkspaceContextUtils"
 import { FileSystemUtils } from "./utils/FileSystemUtils"
 import { IndexMetadata, MetadataTypes } from "./views/treeviews/metadata/IndexMetadata"
 import { LinkTypes } from "./views/treeviews/hyperlinks/IndexHyperlinks"
+import { printChannelOutput } from "./helpers/logger"
 
 export interface IMeridianIndex {
    [key: string]: IMeridianEntry
@@ -179,20 +180,34 @@ export class Meridian {
 
    private async indexWorkspace(): Promise<void> {
       const populateEntries = this.workspaceFiles.map(async (file) => {
-         const entry: IMeridianEntry = await this.generateEntry(file)
-         return { file, entry }
+         try {
+            const entry: IMeridianEntry = await this.generateEntry(file)
+            return { file, entry }
+         } catch (error) {
+            printChannelOutput(
+               `Failed to generate an entry for file ${file}: ${error}`,
+               false,
+               "error"
+            )
+            console.error(`Failed to generate an entry for file ${file}: `, error)
+            return null
+         }
       })
 
       const entries = await Promise.all(populateEntries)
 
-      for (const { file, entry } of entries) {
-         // Add each entry to Workspace Context:
-         await this.meridianIndexCrud.addMeridianEntry(file, entry)
-         // Populate inlinks:
-         if (this.arrayUtils.isStringArray(entry.outlinks)) {
-            this.indexHyperlinks.refreshInlinks(entry.fullPath, entry.outlinks)
+      for (const result of entries) {
+         if (result) {
+            const { file, entry } = result
+            await this.meridianIndexCrud.addMeridianEntry(file, entry)
+
+            if (this.arrayUtils.isStringArray(entry.outlinks)) {
+               this.indexHyperlinks.refreshInlinks(entry.fullPath, entry.outlinks)
+            }
          }
       }
+
+      printChannelOutput(`${entries.length} files indexed`, false)
    }
 
    /**

@@ -11,12 +11,14 @@ import registerTreeView from "./helpers/registerTreeView"
 import registerCommand, { ICommandParams } from "./helpers/registerCommand"
 import { WorkspaceContextUtils } from "./utils/WorkspaceContextUtils"
 import { ArrayUtils } from "./utils/ArrayUtils"
+import { UserPreferences } from "./utils/UserPreferences"
 
 export async function activate(context: vscode.ExtensionContext) {
    try {
+      const userPreferences = new UserPreferences()
       const workspaceContextUtils = new WorkspaceContextUtils(context)
       const meridianIndexCrud = new MeridianIndexCrud(context)
-      const fileSystemUtils = new FileSystemUtils()
+      const fileSystemUtils = new FileSystemUtils(userPreferences)
       const arrayUtils = new ArrayUtils()
       const indexMetadata = new IndexMetadata(context)
 

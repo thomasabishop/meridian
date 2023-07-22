@@ -1,11 +1,18 @@
+// import { userPreferences } from "./../helpers/userPreferences"
 import * as path from "path"
 import * as recursiveReadDir from "recursive-readdir"
 import * as vscode from "vscode"
-import { userPreferences } from "../helpers/userPreferences"
+//import { userPreferences } from "../helpers/userPreferences"
+import { UserPreferences } from "./UserPreferences"
 export class FileSystemUtils {
+   private userPreferences: UserPreferences
+
+   constructor(userPreferences: UserPreferences) {
+      this.userPreferences = userPreferences
+   }
+
    private getWorkspaceRoot(): string | undefined {
-      return vscode.workspace.workspaceFolders &&
-         vscode.workspace.workspaceFolders.length > 0
+      return vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0
          ? vscode.workspace.workspaceFolders[0].uri.fsPath
          : undefined
    }
@@ -24,10 +31,12 @@ export class FileSystemUtils {
 
    public async collateWorkspaceFiles(): Promise<string[] | undefined> {
       const workspaceRoot = this.getWorkspaceRoot()
+
       if (workspaceRoot) {
          return await recursiveReadDir(
             path.resolve(workspaceRoot),
-            userPreferences.ignoreDirectories
+            this.userPreferences.ignoreDirs
+            //      userPreferences.ignoreDirectories
          )
       }
    }

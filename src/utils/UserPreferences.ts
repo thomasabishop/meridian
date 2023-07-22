@@ -2,8 +2,19 @@ import * as vscode from "vscode"
 import { printChannelOutput } from "../helpers/logger"
 
 export class UserPreferences {
-   public readonly ignoreDirs: string[] | undefined = ["node_modules", ".git"]
-
+   private readonly ignoreFiles: string[] = [
+      "!*.md",
+      "README.md",
+      "readme.md",
+      "changelog.md",
+      "CHANGELOG.md",
+   ]
+   public readonly ignoreDirs: string[] | undefined = [
+      "!*.md",
+      "node_modules",
+      ".git",
+      ...this.ignoreFiles,
+   ]
    constructor() {
       this.getIgnoreDirs()
    }
@@ -15,7 +26,7 @@ export class UserPreferences {
 
       if (userIgnores) {
          this.ignoreDirs?.push(...userIgnores)
+         printChannelOutput(`Meridian is ignoring the directories ${userIgnores}`)
       }
-      printChannelOutput(`Meridian is ignoring the directories ${this.ignoreDirs}`)
    }
 }

@@ -79,7 +79,9 @@ export async function activate(context: vscode.ExtensionContext) {
                outlinksView.refresh(currentlyActiveFile, LinkTypes.Outlinks)
                // Log event
                printChannelOutput(
-                  `Editor changed: refreshed inlinks/outlinks for file ${event?.document.fileName}`
+                  `Event (editor change): refreshed link data for file "${fileSystemUtils.prettifyFileName(
+                     currentlyActiveFile
+                  )}"`
                )
             }
          }
@@ -93,6 +95,12 @@ export async function activate(context: vscode.ExtensionContext) {
                tagsView.refresh()
                outlinksView.refresh(savedFile, LinkTypes.Outlinks)
                inlinksView.refresh(savedFile, LinkTypes.Inlinks)
+               // Log event
+               printChannelOutput(
+                  `Event (editor save): refreshed link data and metadata for file "${fileSystemUtils.prettifyFileName(
+                     savedFile
+                  )}"`
+               )
             })
          }
       })

@@ -29,6 +29,10 @@ export class FileSystemUtils {
       return path.basename(fullPath, ".md")
    }
 
+   public prettifyFileName(fileName: string): string {
+      return this.parseFileTitle(this.extractFileNameFromFullPath(fileName))
+   }
+
    public async collateWorkspaceFiles(): Promise<string[] | undefined> {
       const workspaceRoot = this.getWorkspaceRoot()
 

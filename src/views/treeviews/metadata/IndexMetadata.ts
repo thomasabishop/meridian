@@ -3,6 +3,7 @@ import * as yamlFrontMatter from "yaml-front-matter"
 import * as vscode from "vscode"
 import { WorkspaceContextUtils } from "../../../utils/WorkspaceContextUtils"
 import { IMeridianEntry, IMeridianIndex } from "../../../Meridian"
+import { printChannelOutput } from "../../../helpers/logger"
 
 /**
  * Create indices of Markdown frontmatter.
@@ -88,7 +89,11 @@ export class IndexMetadata {
       metadatumType: MetadataTypes
    ): Promise<IMeridianEntry["categories" | "tags"]> {
       const fileContents = await fs.promises.readFile(markdownFile, "utf-8")
-      const metadata = yamlFrontMatter.loadFront(fileContents)[metadatumType]
-      return metadata ?? undefined
+      const frontMatter = yamlFrontMatter.loadFront(fileContents)
+
+      if (MetadataTypes.Categories in frontMatter || MetadataTypes.Tags in frontMatter) {
+         const metadata = yamlFrontMatter.loadFront(fileContents)[metadatumType]
+         return metadata ?? undefined
+      }
    }
 }

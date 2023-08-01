@@ -12,16 +12,11 @@ export class WorkspaceContextUtils {
       this.context = context
    }
 
-   public async writeToWorkspaceContext<T>(
-      key: string,
-      value: IMeridianIndex
-   ): Promise<void> {
+   public async writeToWorkspaceContext<T>(key: string, value: IMeridianIndex): Promise<void> {
       await this.context.workspaceState.update(key, value)
    }
 
-   public async readFromWorkspaceContext<T>(
-      key: string
-   ): Promise<IMeridianIndex | undefined> {
+   public async readFromWorkspaceContext<T>(key: string): Promise<IMeridianIndex | undefined> {
       return this.context.workspaceState.get<IMeridianIndex>(key)
    }
 

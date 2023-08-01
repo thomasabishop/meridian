@@ -24,19 +24,31 @@
       "viewsWelcome": [
          {
             "view": "categories",
-            "contents": ""
+            "contents": "Could not identify any Markdown files with category metadata. \n\n Update your YAML front-matter to organise files by category."
          },
          {
             "view": "tags",
-            "contents": ""
+            "contents": "Could not identify any Markdown files with tag metadata. \n\n Update your YAML front-matter to organise files by tag."
          },
          {
             "view": "inlinks",
-            "contents": ""
+            "when": "resourceLangId !== markdown",
+            "contents": "No data: the current editor is not a Markdown file. \n\n Open a Markdown file to view inlinks."
+         },
+         {
+            "view": "inlinks",
+            "when": "resourceLangId == markdown",
+            "contents": "The current Markdown file is not linked to by any other Markdown files in the workspace."
          },
          {
             "view": "outlinks",
-            "contents": ""
+            "when": "resourceLangId !== markdown",
+            "contents": "No data: the current editor is not a Markdown file. \n\n Open a Markdown file to view outlinks."
+         },
+         {
+            "view": "outlinks",
+            "when": "resourceLangId == markdown",
+            "contents": "The current Markdown file does not link to any other Markdown files in the workspace."
          }
       ],
       "viewsContainers": {

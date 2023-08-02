@@ -152,6 +152,15 @@ export async function activate(context: vscode.ExtensionContext) {
                tagsView.refresh()
                outlinksView.refresh(currentlyActiveFile, LinkTypes.Outlinks)
                inlinksView.refresh(currentlyActiveFile, LinkTypes.Inlinks)
+               // Log event
+               const prettifiedRenamedFiles = oldFileNames.map((file) =>
+                  fileSystemUtils.prettifyFileName(file)
+               )
+               printChannelOutput(
+                  `Event (file rename): file(s) renamed (${JSON.stringify(
+                     prettifiedRenamedFiles
+                  )}). Refreshed link data and metadata.`
+               )
             })
       })
 

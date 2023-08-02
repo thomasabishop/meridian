@@ -67,7 +67,11 @@ export async function activate(context: vscode.ExtensionContext) {
          context
       )
 
-      const tagsView = registerTreeView(IndexMetadataProvider, MetadataTypes.Tags, context)
+      const tagsView = registerTreeView(
+         IndexMetadataProvider,
+         MetadataTypes.Tags,
+         context
+      )
 
       const onEditorChange = vscode.window.onDidChangeActiveTextEditor(async (event) => {
          let currentlyActiveFile = event?.document.fileName
@@ -108,7 +112,8 @@ export async function activate(context: vscode.ExtensionContext) {
       const onFileDelete = vscode.workspace.onDidDeleteFiles(async (event) => {
          if (event.files) {
             meridian.removeEntries(event.files.map((file) => file.path)).then(() => {
-               const currentlyActiveFile = vscode.window.activeTextEditor?.document?.fileName
+               const currentlyActiveFile =
+                  vscode.window.activeTextEditor?.document?.fileName
                categoriesView.refresh()
                tagsView.refresh()
                outlinksView.refresh(currentlyActiveFile, LinkTypes.Outlinks)
@@ -138,7 +143,9 @@ export async function activate(context: vscode.ExtensionContext) {
          meridian
             .removeEntries(oldFileNames)
             .then(() => {
-               return Promise.all(newFileNames.map((file) => meridian.indexWorkspaceFile(file)))
+               return Promise.all(
+                  newFileNames.map((file) => meridian.indexWorkspaceFile(file))
+               )
             })
             .then(() => {
                categoriesView.refresh()

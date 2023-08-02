@@ -113,6 +113,16 @@ export async function activate(context: vscode.ExtensionContext) {
                tagsView.refresh()
                outlinksView.refresh(currentlyActiveFile, LinkTypes.Outlinks)
                inlinksView.refresh(currentlyActiveFile, LinkTypes.Inlinks)
+
+               // Log event
+               const prettifiedDelFiles = event.files.map((file) =>
+                  fileSystemUtils.prettifyFileName(file.path)
+               )
+               printChannelOutput(
+                  `Event (file deletion): file(s) deleted (${JSON.stringify(
+                     prettifiedDelFiles
+                  )}). Refreshed link data and metadata.`
+               )
             })
          }
          return

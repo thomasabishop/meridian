@@ -1,7 +1,7 @@
 {
    "name": "meridian",
    "displayName": "Meridian",
-   "description": "Parse, display and organise metadata in large Markdown knowledge bases from within VSCode",
+   "description": "A VSCode extension to parse, display and organise metadata in large Markdown knowledge bases",
    "icon": "media/meridian-extension-logo.png",
    "publisher": "thomasabishop",
    "version": "0.0.2",

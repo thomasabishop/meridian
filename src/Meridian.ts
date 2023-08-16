@@ -29,6 +29,9 @@ export class Meridian {
    private fileSystemUtils: FileSystemUtils
    private arrayUtils: ArrayUtils
    private meridianIndexCrud: MeridianIndexCrud
+   private unindexableFiles: number = 0
+   private indexedFiles: number = 0
+   private unindexedFiles: string[] = []
    constructor(
       workspaceFiles: string[],
       workspaceContextUtils: WorkspaceContextUtils,
@@ -62,15 +65,28 @@ export class Meridian {
       categories?: string[],
       tags?: string[],
       outlinks?: string[]
-   ): Promise<IMeridianEntry> {
+   ): Promise<IMeridianEntry | null> {
       categories =
          categories ||
          (await this.indexMetadata.extractMetadataForFile(file, MetadataTypes.Categories))
 
       outlinks = outlinks || [...new Set(await this.indexHyperlinks.processLinks(file))]
 
-      tags = tags || (await this.indexMetadata.extractMetadataForFile(file, MetadataTypes.Tags))
+      tags =
+         tags ||
+         (await this.indexMetadata.extractMetadataForFile(file, MetadataTypes.Tags))
 
+      if (
+         (categories === undefined || categories.length === 0) &&
+         (tags === undefined || tags.length === 0) &&
+         (outlinks === undefined || outlinks.length === 0)
+      ) {
+         this.unindexedFiles.push(this.fileSystemUtils.prettifyFileName(file))
+         this.unindexableFiles++
+         return null
+      }
+
+      this.indexedFiles++
       return {
          fullPath: file,
          title: this.fileSystemUtils.parseFileTitle(file),
@@ -97,7 +113,9 @@ export class Meridian {
       newPropertyValues: string[] | undefined,
       fullPath: string
    ): Promise<void> {
-      if (this.arrayUtils.changesExist(oldPropertyValues ?? [], newPropertyValues ?? [])) {
+      if (
+         this.arrayUtils.changesExist(oldPropertyValues ?? [], newPropertyValues ?? [])
+      ) {
          await this.meridianIndexCrud.updateMeridianEntryProperty(
             type,
             fullPath,
@@ -131,7 +149,12 @@ export class Meridian {
          reindexedCategories,
          fullPath
       )
-      await this.updateExistingEntryProperty(MetadataTypes.Tags, tags, reindexedTags, fullPath)
+      await this.updateExistingEntryProperty(
+         MetadataTypes.Tags,
+         tags,
+         reindexedTags,
+         fullPath
+      )
 
       // Update entries that maintain links to the updated existing entry...
       if (this.arrayUtils.changesExist(outlinks ?? [], reindexedOutlinks ?? [])) {
@@ -139,7 +162,10 @@ export class Meridian {
             outlinks ?? [],
             reindexedOutlinks ?? []
          )
-         const linksAdded = this.arrayUtils.elementsAdded(outlinks ?? [], reindexedOutlinks ?? [])
+         const linksAdded = this.arrayUtils.elementsAdded(
+            outlinks ?? [],
+            reindexedOutlinks ?? []
+         )
 
          if (linksRemoved.length) {
             this.indexHyperlinks.refreshInlinks(fullPath, linksRemoved, "remove")
@@ -170,8 +196,10 @@ export class Meridian {
       outlinks: string[]
    ): Promise<void> {
       const newEntry = await this.generateEntry(file, categories, tags, outlinks)
-      await this.meridianIndexCrud.addMeridianEntry(file, newEntry)
-      outlinks && this.indexHyperlinks.refreshInlinks(file, outlinks)
+      if (newEntry !== null) {
+         await this.meridianIndexCrud.addMeridianEntry(file, newEntry)
+         outlinks && this.indexHyperlinks.refreshInlinks(file, outlinks)
+      }
    }
 
    /**
@@ -181,14 +209,9 @@ export class Meridian {
    private async indexWorkspace(): Promise<void> {
       const populateEntries = this.workspaceFiles.map(async (file) => {
          try {
-            const entry: IMeridianEntry = await this.generateEntry(file)
-            return { file, entry }
+            const entry: IMeridianEntry | null = await this.generateEntry(file)
+            return entry !== null ? { file, entry } : null
          } catch (error) {
-            printChannelOutput(
-               `Failed to generate an entry for file ${file}: ${error}`,
-               false,
-               "error"
-            )
             console.error(`Failed to generate an entry for file ${file}: `, error)
             return null
          }
@@ -196,7 +219,9 @@ export class Meridian {
 
       const entries = await Promise.all(populateEntries)
 
-      for (const result of entries) {
+      const validEntries = entries.filter((result) => result !== null)
+
+      for (const result of validEntries) {
          if (result) {
             const { file, entry } = result
             await this.meridianIndexCrud.addMeridianEntry(file, entry)
@@ -207,7 +232,10 @@ export class Meridian {
          }
       }
 
-      printChannelOutput(`${entries.length} files indexed`, false)
+      printChannelOutput(
+         `${entries.length} files processed: ${this.indexedFiles} were indexed, ${this.unindexableFiles} could not be indexed (${this.unindexedFiles})`,
+         false
+      )
    }
 
    /**
@@ -217,14 +245,18 @@ export class Meridian {
     */
 
    public async indexWorkspaceFile(updatedFile: string): Promise<void> {
-      const meridianIndex = await this.workspaceContextUtils.readFromWorkspaceContext("MERIDIAN")
+      const meridianIndex = await this.workspaceContextUtils.readFromWorkspaceContext(
+         "MERIDIAN"
+      )
       const allEntries = meridianIndex && Object.keys(meridianIndex)
       const existingEntry = await this.meridianIndexCrud.getMeridianEntry(updatedFile)
 
       const [reindexedCategories, reindexedTags, reindexedOutlinks] = await Promise.all([
          this.indexMetadata.extractMetadataForFile(updatedFile, MetadataTypes.Categories),
          this.indexMetadata.extractMetadataForFile(updatedFile, MetadataTypes.Tags),
-         allEntries ? this.indexHyperlinks.processLinks(updatedFile) : Promise.resolve(undefined),
+         allEntries
+            ? this.indexHyperlinks.processLinks(updatedFile)
+            : Promise.resolve(undefined),
       ])
 
       await (existingEntry

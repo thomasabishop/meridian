@@ -50,8 +50,55 @@ export class Meridian {
       this.meridianIndexCrud = meridianIndexCrud
    }
 
+   private async extractMetadata(
+      file: string,
+      type: MetadataTypes,
+      existingData: string[] = []
+   ): Promise<string[]> {
+      const result = await this.indexMetadata.extractMetadataForFile(file, type)
+      return existingData.length > 0 ? existingData : result || []
+   }
+
+   private async processLinks(file: string, existingLinks: string[]): Promise<string[]> {
+      return existingLinks.length > 0
+         ? existingLinks
+         : [...new Set(await this.indexHyperlinks.processLinks(file))]
+   }
+
    /**
-    * Generates a Meridian entry (object of type IMeridianEntry)
+    * A file is indexable if it contains at least one instance of Meridian metadata
+    */
+   private isFileIndexable(
+      categories: string[],
+      tags: string[],
+      outlinks: string[]
+   ): boolean {
+      return categories.length > 0 || tags.length > 0 || outlinks.length > 0
+   }
+
+   private recordUnindexedFile(file: string): void {
+      this.unindexedFiles.push(this.fileSystemUtils.prettifyFileName(file))
+      this.unindexableFiles++
+   }
+
+   private createMeridianEntry(
+      file: string,
+      categories: string[],
+      tags: string[],
+      outlinks: string[]
+   ): IMeridianEntry {
+      return {
+         fullPath: file,
+         title: this.fileSystemUtils.parseFileTitle(file),
+         categories: categories,
+         tags: tags,
+         outlinks: outlinks,
+         inlinks: [],
+      }
+   }
+
+   /**
+    * If indexable data exists, create Meridian entry (IMeridianEntry)
     *
     * @param file - File path to generate entry for.
     * @param categories - Optional; extracted from file if not provided.
@@ -62,39 +109,21 @@ export class Meridian {
 
    private async generateEntry(
       file: string,
-      categories?: string[],
-      tags?: string[],
-      outlinks?: string[]
+      categories: string[] = [],
+      tags: string[] = [],
+      outlinks: string[] = []
    ): Promise<IMeridianEntry | null> {
-      categories =
-         categories ||
-         (await this.indexMetadata.extractMetadataForFile(file, MetadataTypes.Categories))
+      categories = await this.extractMetadata(file, MetadataTypes.Categories, categories)
+      tags = await this.extractMetadata(file, MetadataTypes.Tags, tags)
+      outlinks = await this.processLinks(file, outlinks)
 
-      outlinks = outlinks || [...new Set(await this.indexHyperlinks.processLinks(file))]
-
-      tags =
-         tags ||
-         (await this.indexMetadata.extractMetadataForFile(file, MetadataTypes.Tags))
-
-      if (
-         (categories === undefined || categories.length === 0) &&
-         (tags === undefined || tags.length === 0) &&
-         (outlinks === undefined || outlinks.length === 0)
-      ) {
-         this.unindexedFiles.push(this.fileSystemUtils.prettifyFileName(file))
-         this.unindexableFiles++
+      if (!this.isFileIndexable(categories, tags, outlinks)) {
+         this.recordUnindexedFile(file)
          return null
       }
 
       this.indexedFiles++
-      return {
-         fullPath: file,
-         title: this.fileSystemUtils.parseFileTitle(file),
-         categories: categories,
-         tags: tags,
-         outlinks: outlinks,
-         inlinks: [],
-      }
+      return this.createMeridianEntry(file, categories, tags, outlinks)
    }
 
    /**

@@ -56,7 +56,9 @@ export class IndexMetadata {
       }
    }
 
-   public async collateAllMetadataOfType(metadataType: MetadataTypes): Promise<IMetadatumIndex[]> {
+   public async collateAllMetadataOfType(
+      metadataType: MetadataTypes
+   ): Promise<IMetadatumIndex[]> {
       const meridianIndex: IMeridianIndex | undefined =
          await this.workspaceContextUtils.readFromWorkspaceContext("MERIDIAN")
       let metadataMap: IMetadatumIndex[] = []
